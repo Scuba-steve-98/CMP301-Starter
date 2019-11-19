@@ -4,6 +4,11 @@
 
 // Includes
 #include "../DXFramework/DXF.h"
+#include "HeightShader.h"
+#include "WaveShader.h"
+#include "TextureShader.h"
+#include "ShadowShader.h"
+#include "DepthShader.h"
 
 
 class App1 : public BaseApplication
@@ -19,9 +24,28 @@ public:
 protected:
 	bool render();
 	void gui();
+	void depthPass();
+	void secondPass();
+	void finalPass();
 
 private:
+	HeightShader* heightShader;
+	WaveShader* waveShader;
+	TextureShader* textureShader;
+	ShadowShader* shadowShader;
+	DepthShader* depthShader;
+	ShadowMap* shadowMap;
+	Light* light;
+	Light* spotLight[2];
+	Light* pointLight;
 
+	PlaneMesh* heightMap;
+	PlaneMesh* waves;
+	CubeMesh* lamp;
+	Model* campfire;
+
+	float amplitude, freq, speed, run_time;
+	float displace;
 };
 
 #endif

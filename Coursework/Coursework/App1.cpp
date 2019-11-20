@@ -27,6 +27,11 @@ void App1::init(HINSTANCE hinstance, HWND hwnd, int screenWidth, int screenHeigh
 	waveShader = new WaveShader(renderer->getDevice(), hwnd);
 	heightMap = new PlaneMesh(renderer->getDevice(), renderer->getDeviceContext());
 	heightShader = new HeightShader(renderer->getDevice(), hwnd);
+	spotLight = new Light;
+	spotLight->setPosition(5, 4, 8);
+	spotLight->setDiffuseColour(1, 1, 1, 1);
+	spotLight->setDirection(1, 1, 1);
+	spotLight->setSpecularPower(3);
 	light = new Light;
 	light->setDiffuseColour(1.0f, 1.0f, 1.0f, 1.0f);
 	light->setDirection(0.7f, -0.7f, 0.0f);
@@ -58,6 +63,11 @@ App1::~App1()
 		light = 0;
 	}
 
+	if (spotLight)
+	{
+		delete spotLight;
+		spotLight = 0;
+	}
 }
 
 

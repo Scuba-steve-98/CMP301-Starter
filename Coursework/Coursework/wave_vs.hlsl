@@ -41,6 +41,7 @@ float calc(float x, float z)
 
 OutputType main(InputType input)
 {
+	#define OFFSET .1f
     OutputType output;
 	// find co-ordinates
     float3 north, east, south, west, centre;
@@ -48,20 +49,20 @@ OutputType main(InputType input)
     input.position.y = calc(input.position.x, input.position.z);
 
     north.x = input.position.x;
-    east.x = input.position.x + 0.01f;
+    east.x = input.position.x + OFFSET;
     south.x = input.position.x;
-    west.x = input.position.x - 0.01f;
+    west.x = input.position.x - OFFSET;
     centre.x = input.position.x;
 
-    north.y = calc(input.position.x, input.position.y + 0.01f);
-    east.y = calc(input.position.x + 0.01f, input.position.y);
-    south.y = calc(input.position.x, input.position.y - 0.01f);
-    west.y = calc(input.position.x - 0.01f, input.position.y);
+    north.y = calc(input.position.x, input.position.y + OFFSET);
+    east.y = calc(input.position.x + OFFSET, input.position.y);
+    south.y = calc(input.position.x, input.position.y - OFFSET);
+    west.y = calc(input.position.x - OFFSET, input.position.y);
     centre.y = input.position.y;
 
-    north.z = input.position.z + 0.01f;
+    north.z = input.position.z + OFFSET;
     east.z = input.position.z;
-    south.z = input.position.z - 0.01f;
+    south.z = input.position.z - OFFSET;
     west.z = input.position.z;
     centre.z = input.position.z;
 
@@ -90,39 +91,42 @@ OutputType main(InputType input)
     east_centre.z = east.z - centre.z;
     south_centre.z = south.z - centre.z;
     west_centre.z = west.z - centre.z;
+
+    //north_centre = centre - north;
+    //east_centre = centre - east;
+    //south_centre = centre - south;
+    //west_centre = centre - west;
 	   
 	// calculate cross product
     float3 crossNE, crossES, crossSW, crossWN;
 
-    crossNE = normalize(cross(north_centre, east_centre)); //0
+    crossNE = /*normalize*/(cross(north_centre, east_centre)); //0
     //crossNE = normalize(cross(east_centre, north_centre));
-
-
-    crossES = normalize(cross(east_centre, south_centre)); //0		
+	   
+    crossES = /*normalize*/(cross(east_centre, south_centre)); //0		
     //crossES = normalize(cross(south_centre, east_centre));
     
-
-    crossSW = normalize(cross(south_centre, west_centre)); //0	
+    crossSW = /*normalize*/(cross(south_centre, west_centre)); //0	
     //crossSW = normalize(cross(west_centre, south_centre));
 	
-
-    crossWN = normalize(cross(west_centre, north_centre)); //0
+    crossWN = /*normalize*/(cross(west_centre, north_centre)); //0
     //crossWN = normalize(cross(north_centre, west_centre));
 
 	// normalize
-    //float3 normal1, normal2, normal3, normal4;
-    //normal1 = normalize(north_centre);
-    //normal2 = normalize(east_centre);
-    //normal3 = normalize(south_centre);
-    //normal4 = normalize(west_centre);
+    float3 normal1, normal2, normal3, normal4, normal_avg;
+    //normal1 = normalize(crossNE);
+    //normal2 = normalize(crossES);
+    //normal3 = normalize(crossSW);
+    //normal4 = normalize(crossWN);
+    normal_avg = normalize(crossNE + crossES + crossSW + crossWN / 4);
 
 	// calculate average
     float3 average_normal;
-
-    average_normal = (crossNE + crossES + crossSW + crossWN) / 4;
+    //average_normal = (normal1 + normal2 + normal3 + normal4) / 4;
+    //average_normal = (crossNE + crossES + crossSW + crossWN) / 4;
 
 	//set normals
-    input.normal = average_normal;
+    input.normal = normal_avg;
 
 	// Calculate the position of the vertex against the world, view, and projection matrices.
     output.position = mul(input.position, worldMatrix);

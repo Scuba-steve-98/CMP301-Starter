@@ -36,12 +36,14 @@ private:
 	DepthShader* depthShader;
 	ShadowMap* shadowMap;
 	Light* light;
-	Light* spotLight[2];
+	Light* spotLight;
 	Light* pointLight;
 
 	PlaneMesh* heightMap;
 	PlaneMesh* waves;
 	CubeMesh* lamp;
+	Model* person;
+	Model* torch;
 	Model* campfire;
 
 	float amplitude, freq, speed, run_time;

@@ -23,10 +23,12 @@ public:
 
 protected:
 	bool render();
-	void gui();
+	void manipulation();
 	void depthPass();
+	void shadowPass();
 	void secondPass();
 	void finalPass();
+	void gui();
 
 private:
 	HeightShader* heightShader;
@@ -48,6 +50,7 @@ private:
 
 	float amplitude, freq, speed, run_time;
 	float displace;
+	float pmove[3], cmove[3], tmove[3], trotate[3], protate, pscale, cscale, tscale;
 };
 
 #endif

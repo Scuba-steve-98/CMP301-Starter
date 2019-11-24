@@ -49,8 +49,7 @@ private:
 	Model* campfire;
 
 	float amplitude, freq, speed, run_time;
-	float displace;
-	float pmove[3], cmove[3], tmove[3], trotate[3], protate, pscale, cscale, tscale;
+	//float displace;
 };
 
 #endif

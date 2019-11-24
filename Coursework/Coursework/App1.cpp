@@ -4,6 +4,12 @@
 #define WAVE_AMPLITUDE 0.148f
 #define WAVE_FREQUENCY 2.634f
 #define WAVE_SPEED 0.258f
+#define PERSON_MOVE 622, 33, 500
+#define PERSON_TORCH_SIZE 0.063, 0.063, 0.063
+#define TORCH_MOVE 622, 69, 474
+#define TORCH_ROTATE 4.71239
+#define CAMP_MOVE 27.227, 1.223, 25.223
+#define CAMP_SIZE 1.5, 1.5, 1.5
 
 App1::App1()
 {
@@ -57,27 +63,11 @@ void App1::init(HINSTANCE hinstance, HWND hwnd, int screenWidth, int screenHeigh
 	light = new Light;
 	light->setAmbientColour(0.3f, 0.3f, 0.3f, 1.0f);
 	light->setDiffuseColour(1.0f, 1.0f, 1.0f, 1.0f);
-	light->setDirection(0.0f, -0.2f, 0.7f);
+	light->setDirection(0.7f, -0.7f, 0.0f);
 	light->setPosition(0.f, 0.f, -10.f);
 	light->generateOrthoMatrix((float)sceneWidth, (float)sceneHeight, 0.1f, 100.f);
 
 	run_time = 0.f;
-
-	// pmove[3], cmove[3], tmove[3], trotate[3], protate, pscale, cscale, tscale;
-	pmove[0] = 622;
-	pmove[1] = 33;
-	pmove[2] = 500;
-	pscale = 0.063;
-
-	tmove[0] = 622;
-	tmove[1] = 69;
-	tmove[2] = 478;
-	tscale = 0.063;
-
-	cmove[0] = 27.227;
-	cmove[1] = 1.223;
-	cmove[2] = 25.223;
-	cscale = 1.5;
 }
 
 
@@ -154,19 +144,14 @@ void App1::manipulation()
 	waveShader->setShaderParameters(renderer->getDeviceContext(), worldMatrix, viewMatrix, projectionMatrix, textureMgr->getTexture(L"waves"), light, run_time, WAVE_AMPLITUDE, WAVE_FREQUENCY, WAVE_SPEED);
 	waveShader->render(renderer->getDeviceContext(), waves->getIndexCount());
 
+	worldMatrix = XMMatrixTranslation(0, -2.86, 0);
 	heightMap->sendData(renderer->getDeviceContext());
 	heightShader->setShaderParameters(renderer->getDeviceContext(), worldMatrix, viewMatrix, projectionMatrix, textureMgr->getTexture(L"grass"), light, textureMgr->getTexture(L"height"));
 	heightShader->render(renderer->getDeviceContext(), heightMap->getIndexCount());
 
 	// Render models
-
-	//pmove[3], cmove[3], tmove[3], trotate[3], protate, pscale, cscale, tscale;
-
-
-	//worldMatrix = XMMatrixRotationAxis()
-	//worldMatrix = XMMatrixScaling();
-	worldMatrix = XMMatrixTranslation(pmove[0], pmove[1], pmove[2]);
-	XMMATRIX scaleMatrix = XMMatrixScaling(pscale, pscale, pscale);
+	worldMatrix = XMMatrixTranslation(PERSON_MOVE);
+	XMMATRIX scaleMatrix = XMMatrixScaling(PERSON_TORCH_SIZE);
 	worldMatrix = XMMatrixMultiply(worldMatrix, scaleMatrix);
 
 	person->sendData(renderer->getDeviceContext());
@@ -175,8 +160,8 @@ void App1::manipulation()
 
 
 	//worldMatrix = XMMatrixScaling();
-	worldMatrix = XMMatrixTranslation(cmove[0], cmove[1], cmove[2]);
-	scaleMatrix = XMMatrixScaling(cscale, cscale, cscale);
+	worldMatrix = XMMatrixTranslation(CAMP_MOVE);
+	scaleMatrix = XMMatrixScaling(CAMP_SIZE);
 	worldMatrix = XMMatrixMultiply(worldMatrix, scaleMatrix);
 
 	campfire->sendData(renderer->getDeviceContext());
@@ -185,8 +170,10 @@ void App1::manipulation()
 
 
 	//worldMatrix = XMMatrixScaling();
-	worldMatrix = XMMatrixTranslation(tmove[0], tmove[1], tmove[2]);
-	scaleMatrix = XMMatrixScaling(tscale, tscale, tscale);
+	XMMATRIX rotate = XMMatrixRotationY(TORCH_ROTATE);
+	worldMatrix = XMMatrixTranslation(TORCH_MOVE);
+	worldMatrix = XMMatrixMultiply(rotate, worldMatrix);
+	scaleMatrix = XMMatrixScaling(PERSON_TORCH_SIZE);
 	worldMatrix = XMMatrixMultiply(worldMatrix, scaleMatrix);
 
 	torch->sendData(renderer->getDeviceContext());
@@ -330,31 +317,7 @@ void App1::gui()
 	// Build UI
 	ImGui::Text("FPS: %.2f", timer->getFPS());
 	ImGui::Checkbox("Wireframe mode", &wireframeToggle);
-	ImGui::SliderFloat("Person Move X", &pmove[0], 500, 2000);
-	ImGui::SliderFloat("Person Move Y", &pmove[1], 0, 50);
-	ImGui::SliderFloat("Person Move Z", &pmove[2], 500, 2000);
 
-	ImGui::SliderFloat("Camp Move X", &cmove[0], 5, 50);
-	ImGui::SliderFloat("Camp Move Y", &cmove[1], 0, 50);
-	ImGui::SliderFloat("Camp Move Z", &cmove[2], 5, 50);
-	
-	ImGui::SliderFloat("Torch Move X", &tmove[0], 50, 2000);
-	ImGui::SliderFloat("Torch Move Y", &tmove[1], 0, 150);
-	ImGui::SliderFloat("Torch Move Z", &tmove[2], 50, 2000);
-
-	ImGui::SliderFloat("Torch Rotate X", &tmove[0], 0, 180);
-	ImGui::SliderFloat("Torch Rotate Y", &tmove[1], 0, 180);
-	ImGui::SliderFloat("Torch Rotate Z", &tmove[2], 0, 180);
-
-	ImGui::SliderFloat("Person Rotate Y", &protate, 0, 180);
-
-	ImGui::SliderFloat("Person Scale", &pscale, 0, 0.2);
-
-	ImGui::SliderFloat("Camp Scale", &cscale, 0, 2);
-
-	ImGui::SliderFloat("Torch Scale", &tscale, 0, 0.5);
-
-	// pmove[3], cmove[3], tmove[3], trotate[3], protate, pscale, cscale, tscale;
 	// Render UI
 	ImGui::Render();
 	ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());

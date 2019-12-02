@@ -1,12 +1,14 @@
-#include "WaveShader.h"
+#include "HeightDepth.h"
 
-WaveShader::WaveShader(ID3D11Device* device, HWND hwnd) : BaseShader(device, hwnd)
+
+
+HeightDepth::HeightDepth(ID3D11Device* device, HWND hwnd) : BaseShader(device, hwnd)
 {
-	initShader(L"wave_vs.cso", L"wave_ps.cso");
+	initShader(L"heightmap_vs.cso", L"heightmap_manip_ps.cso");
 }
 
 
-WaveShader::~WaveShader()
+HeightDepth::~HeightDepth()
 {
 	// Release the sampler state.
 	if (sampleState)
@@ -36,18 +38,12 @@ WaveShader::~WaveShader()
 		lightBuffer = 0;
 	}
 
-	if (timeBuffer)
-	{
-		timeBuffer->Release();
-		timeBuffer = 0;
-	}
-
 	//Release base shader components
 	BaseShader::~BaseShader();
 }
 
 
-void WaveShader::initShader(const wchar_t* vsFilename, const wchar_t* psFilename)
+void HeightDepth::initShader(const wchar_t* vsFilename, const wchar_t* psFilename)
 {
 	D3D11_BUFFER_DESC matrixBufferDesc;
 	D3D11_SAMPLER_DESC samplerDesc;
@@ -104,23 +100,13 @@ void WaveShader::initShader(const wchar_t* vsFilename, const wchar_t* psFilename
 	lightBufferDesc.MiscFlags = 0;
 	lightBufferDesc.StructureByteStride = 0;
 	renderer->CreateBuffer(&lightBufferDesc, NULL, &lightBuffer);
-
-	// Setup time buffer
-	timeBufferDesc.Usage = D3D11_USAGE_DYNAMIC;
-	timeBufferDesc.ByteWidth = sizeof(TimeBufferType);
-	timeBufferDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
-	timeBufferDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
-	timeBufferDesc.MiscFlags = 0;
-	timeBufferDesc.StructureByteStride = 0;
-	renderer->CreateBuffer(&timeBufferDesc, NULL, &timeBuffer);
 }
 
 
-void WaveShader::setShaderParameters(ID3D11DeviceContext* deviceContext, const XMMATRIX& worldMatrix, const XMMATRIX& viewMatrix, const XMMATRIX& projectionMatrix, ID3D11ShaderResourceView* texture, Light* light, float deltaTime, float amplitude, float freq, float speed, ID3D11ShaderResourceView* depthMap)
+void HeightDepth::setShaderParameters(ID3D11DeviceContext* deviceContext, const XMMATRIX& worldMatrix, const XMMATRIX& viewMatrix, const XMMATRIX& projectionMatrix, ID3D11ShaderResourceView* texture, Light* light, ID3D11ShaderResourceView* heightmap, ID3D11ShaderResourceView* depthMap)
 {
 	HRESULT result;
 	D3D11_MAPPED_SUBRESOURCE mappedResource;
-	MatrixBufferType* dataPtr;
 
 	XMMATRIX tworld, tview, tproj, tLightViewMatrix, tLightProjectionMatrix;
 
@@ -132,6 +118,7 @@ void WaveShader::setShaderParameters(ID3D11DeviceContext* deviceContext, const X
 	tLightViewMatrix = XMMatrixTranspose(light->getViewMatrix());
 	tLightProjectionMatrix = XMMatrixTranspose(light->getProjectionMatrix());
 
+	MatrixBufferType* dataPtr;
 	result = deviceContext->Map(matrixBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedResource);
 	dataPtr = (MatrixBufferType*)mappedResource.pData;
 	dataPtr->world = tworld;// worldMatrix;
@@ -154,18 +141,11 @@ void WaveShader::setShaderParameters(ID3D11DeviceContext* deviceContext, const X
 	deviceContext->Unmap(lightBuffer, 0);
 	deviceContext->PSSetConstantBuffers(0, 1, &lightBuffer);
 
-	// Time Data
-	TimeBufferType* timeptr;
-	deviceContext->Map(timeBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedResource);
-	timeptr = (TimeBufferType*)mappedResource.pData;
-	timeptr->time = deltaTime;
-	timeptr->amplitude = amplitude;
-	timeptr->frequency = freq;
-	timeptr->speed = speed;
-	deviceContext->Unmap(timeBuffer, 0);
-	deviceContext->VSSetConstantBuffers(1, 1, &timeBuffer);
-
 	// Set shader texture resource in the pixel shader.
 	deviceContext->PSSetShaderResources(0, 1, &texture);
 	deviceContext->PSSetSamplers(0, 1, &sampleState);
+
+	// Pass the heightmap through
+	deviceContext->VSSetShaderResources(0, 1, &heightmap);
+	deviceContext->VSSetSamplers(0, 1, &sampleState);
 }

@@ -5,7 +5,7 @@ using namespace std;
 using namespace DirectX;
 
 
-class WaveShader : public BaseShader
+class WaveDepth : public BaseShader
 {
 private:
 	struct LightBufferType
@@ -34,8 +34,8 @@ private:
 	};
 
 public:
-	WaveShader(ID3D11Device* device, HWND hwnd);
-	~WaveShader();
+	WaveDepth(ID3D11Device* device, HWND hwnd);
+	~WaveDepth();
 
 	void setShaderParameters(ID3D11DeviceContext* deviceContext, const XMMATRIX& world, const XMMATRIX& view, const XMMATRIX& projection, ID3D11ShaderResourceView* texture, Light* light, float deltaTime, float amplitude, float freq, float speed, ID3D11ShaderResourceView* depthMap);
 

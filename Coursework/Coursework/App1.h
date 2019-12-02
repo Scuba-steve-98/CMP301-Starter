@@ -9,6 +9,8 @@
 #include "TextureShader.h"
 #include "ShadowShader.h"
 #include "DepthShader.h"
+#include "WaveDepth.h"
+#include "HeightDepth.h"
 
 
 class App1 : public BaseApplication
@@ -37,6 +39,8 @@ private:
 	ShadowShader* shadowShader;
 	DepthShader* depthShader;
 	ShadowMap* shadowMap;
+	HeightDepth* heightDepth;
+	WaveDepth* waveDepth;
 	Light* light;
 	Light* spotLight;
 	Light* pointLight;
@@ -50,6 +54,9 @@ private:
 
 	float amplitude, freq, speed, run_time;
 	//float displace;
+
+
+	OrthoMesh* orthoMesh;
 };
 
 #endif

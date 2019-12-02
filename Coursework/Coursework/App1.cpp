@@ -64,7 +64,7 @@ void App1::init(HINSTANCE hinstance, HWND hwnd, int screenWidth, int screenHeigh
 	light->setAmbientColour(0.3f, 0.3f, 0.3f, 1.0f);
 	light->setDiffuseColour(1.0f, 1.0f, 1.0f, 1.0f);
 	light->setDirection(0.7f, -0.7f, 0.0f);
-	light->setPosition(0.f, 0.f, -10.f);
+	light->setPosition(0.f, 10.f, 0.f);
 	light->generateOrthoMatrix((float)sceneWidth, (float)sceneHeight, 0.1f, 100.f);
 
 	run_time = 0.f;
@@ -141,12 +141,12 @@ void App1::manipulation()
 	XMMATRIX projectionMatrix = renderer->getProjectionMatrix();
 
 	waves->sendData(renderer->getDeviceContext());
-	waveShader->setShaderParameters(renderer->getDeviceContext(), worldMatrix, viewMatrix, projectionMatrix, textureMgr->getTexture(L"waves"), light, run_time, WAVE_AMPLITUDE, WAVE_FREQUENCY, WAVE_SPEED);
+	waveShader->setShaderParameters(renderer->getDeviceContext(), worldMatrix, viewMatrix, projectionMatrix, textureMgr->getTexture(L"waves"), light, run_time, WAVE_AMPLITUDE, WAVE_FREQUENCY, WAVE_SPEED, shadowMap->getDepthMapSRV());
 	waveShader->render(renderer->getDeviceContext(), waves->getIndexCount());
 
 	worldMatrix = XMMatrixTranslation(0, -2.86, 0);
 	heightMap->sendData(renderer->getDeviceContext());
-	heightShader->setShaderParameters(renderer->getDeviceContext(), worldMatrix, viewMatrix, projectionMatrix, textureMgr->getTexture(L"grass"), light, textureMgr->getTexture(L"height"));
+	heightShader->setShaderParameters(renderer->getDeviceContext(), worldMatrix, viewMatrix, projectionMatrix, textureMgr->getTexture(L"grass"), light, textureMgr->getTexture(L"height"), shadowMap->getDepthMapSRV());
 	heightShader->render(renderer->getDeviceContext(), heightMap->getIndexCount());
 
 	// Render models
@@ -155,21 +155,19 @@ void App1::manipulation()
 	worldMatrix = XMMatrixMultiply(worldMatrix, scaleMatrix);
 
 	person->sendData(renderer->getDeviceContext());
-	textureShader->setShaderParameters(renderer->getDeviceContext(), worldMatrix, viewMatrix, projectionMatrix, textureMgr->getTexture(L"person"));
-	textureShader->render(renderer->getDeviceContext(), person->getIndexCount());
+	shadowShader->setShaderParameters(renderer->getDeviceContext(), worldMatrix, viewMatrix, projectionMatrix, textureMgr->getTexture(L"person"), shadowMap->getDepthMapSRV(), light);
+	shadowShader->render(renderer->getDeviceContext(), person->getIndexCount());
 
 
-	//worldMatrix = XMMatrixScaling();
 	worldMatrix = XMMatrixTranslation(CAMP_MOVE);
 	scaleMatrix = XMMatrixScaling(CAMP_SIZE);
 	worldMatrix = XMMatrixMultiply(worldMatrix, scaleMatrix);
 
 	campfire->sendData(renderer->getDeviceContext());
-	textureShader->setShaderParameters(renderer->getDeviceContext(), worldMatrix, viewMatrix, projectionMatrix, textureMgr->getTexture(L"campfire"));
-	textureShader->render(renderer->getDeviceContext(), campfire->getIndexCount());
+	shadowShader->setShaderParameters(renderer->getDeviceContext(), worldMatrix, viewMatrix, projectionMatrix, textureMgr->getTexture(L"campfire"), shadowMap->getDepthMapSRV(), light);
+	shadowShader->render(renderer->getDeviceContext(), campfire->getIndexCount());
 
 
-	//worldMatrix = XMMatrixScaling();
 	XMMATRIX rotate = XMMatrixRotationY(TORCH_ROTATE);
 	worldMatrix = XMMatrixTranslation(TORCH_MOVE);
 	worldMatrix = XMMatrixMultiply(rotate, worldMatrix);
@@ -177,17 +175,18 @@ void App1::manipulation()
 	worldMatrix = XMMatrixMultiply(worldMatrix, scaleMatrix);
 
 	torch->sendData(renderer->getDeviceContext());
-	textureShader->setShaderParameters(renderer->getDeviceContext(), worldMatrix, viewMatrix, projectionMatrix, textureMgr->getTexture(L"torch"));
-	textureShader->render(renderer->getDeviceContext(), torch->getIndexCount());
+	shadowShader->setShaderParameters(renderer->getDeviceContext(), worldMatrix, viewMatrix, projectionMatrix, textureMgr->getTexture(L"torch"), shadowMap->getDepthMapSRV(), light);
+	shadowShader->render(renderer->getDeviceContext(), torch->getIndexCount());
 
+	//renderer->setZBuffer(false);
+	//orthoMesh->sendData(renderer->getDeviceContext());
+	//textureShader->setShaderParameters(renderer->getDeviceContext(), renderer->getWorldMatrix(), camera->getOrthoViewMatrix(), renderer->getOrthoMatrix(), shadowMap->getDepthMapSRV());
+	//textureShader->render(renderer->getDeviceContext(), orthoMesh->getIndexCount());
+	//renderer->setZBuffer(true);
 
-	// Render GUI
-	//gui();
-
-	// Present the rendered scene to the screen.
-	//renderer->endScene();
 }
 
+// Write a seperate depth pass for each manipulation
 
 void App1::depthPass()
 {
@@ -200,30 +199,47 @@ void App1::depthPass()
 	XMMATRIX lightProjectionMatrix = light->getOrthoMatrix();
 	XMMATRIX worldMatrix = renderer->getWorldMatrix();
 
-	worldMatrix = XMMatrixTranslation(-50.f, 0.f, -10.f);
 	// Render terrain
 	waves->sendData(renderer->getDeviceContext());
-	depthShader->setShaderParameters(renderer->getDeviceContext(), worldMatrix, lightViewMatrix, lightProjectionMatrix);
-	depthShader->render(renderer->getDeviceContext(), waves->getIndexCount());
+	waveDepth->setShaderParameters(renderer->getDeviceContext(), worldMatrix, viewMatrix, projectionMatrix, textureMgr->getTexture(L"waves"), light, run_time, WAVE_AMPLITUDE, WAVE_FREQUENCY, WAVE_SPEED, lightViewMatrix, lightProjectionMatrix);
+	waveDepth->render(renderer->getDeviceContext(), waves->getIndexCount());
+
+	worldMatrix = XMMatrixTranslation(0, -2.86, 0);
 
 	heightMap->sendData(renderer->getDeviceContext());
-	depthShader->setShaderParameters(renderer->getDeviceContext(), worldMatrix, lightViewMatrix, lightProjectionMatrix);
-	depthShader->render(renderer->getDeviceContext(), heightMap->getIndexCount());
+	heightDepth->setShaderParameters(renderer->getDeviceContext(), worldMatrix, lightViewMatrix, lightProjectionMatrix);
+	heightDepth->render(renderer->getDeviceContext(), heightMap->getIndexCount());
 
-	worldMatrix = renderer->getWorldMatrix();
-	worldMatrix = XMMatrixTranslation(0.f, 7.f, 5.f);
-	XMMATRIX scaleMatrix = XMMatrixScaling(0.5f, 0.5f, 0.5f);
-	worldMatrix = XMMatrixMultiply(worldMatrix, scaleMatrix);
+	//worldMatrix = renderer->getWorldMatrix();
+	//worldMatrix = XMMatrixTranslation(0.f, 7.f, 5.f);
+	//XMMATRIX scaleMatrix = XMMatrixScaling(0.5f, 0.5f, 0.5f);
+	//worldMatrix = XMMatrixMultiply(worldMatrix, scaleMatrix);
 
 
 	// Render models
+	worldMatrix = XMMatrixTranslation(PERSON_MOVE);
+	XMMATRIX scaleMatrix = XMMatrixScaling(PERSON_TORCH_SIZE);
+	worldMatrix = XMMatrixMultiply(worldMatrix, scaleMatrix);
+
 	person->sendData(renderer->getDeviceContext());
 	depthShader->setShaderParameters(renderer->getDeviceContext(), worldMatrix, lightViewMatrix, lightProjectionMatrix);
 	depthShader->render(renderer->getDeviceContext(), person->getIndexCount());
 
+
+	worldMatrix = XMMatrixTranslation(CAMP_MOVE);
+	scaleMatrix = XMMatrixScaling(CAMP_SIZE);
+	worldMatrix = XMMatrixMultiply(worldMatrix, scaleMatrix);
+
 	campfire->sendData(renderer->getDeviceContext());
 	depthShader->setShaderParameters(renderer->getDeviceContext(), worldMatrix, lightViewMatrix, lightProjectionMatrix);
 	depthShader->render(renderer->getDeviceContext(), campfire->getIndexCount());
+
+
+	XMMATRIX rotate = XMMatrixRotationY(TORCH_ROTATE);
+	worldMatrix = XMMatrixTranslation(TORCH_MOVE);
+	worldMatrix = XMMatrixMultiply(rotate, worldMatrix);
+	scaleMatrix = XMMatrixScaling(PERSON_TORCH_SIZE);
+	worldMatrix = XMMatrixMultiply(worldMatrix, scaleMatrix);
 
 	torch->sendData(renderer->getDeviceContext());
 	depthShader->setShaderParameters(renderer->getDeviceContext(), worldMatrix, lightViewMatrix, lightProjectionMatrix);
@@ -246,30 +262,43 @@ void App1::shadowPass()
 	XMMATRIX viewMatrix = camera->getViewMatrix();
 	XMMATRIX projectionMatrix = renderer->getProjectionMatrix();
 
-	worldMatrix = XMMatrixTranslation(-50.f, 0.f, -10.f);
 	// Render floor
 	waves->sendData(renderer->getDeviceContext());
 	shadowShader->setShaderParameters(renderer->getDeviceContext(), worldMatrix, viewMatrix, projectionMatrix, textureMgr->getTexture(L"waves"), shadowMap->getDepthMapSRV(), light);
 	shadowShader->render(renderer->getDeviceContext(), waves->getIndexCount());
 
+
+	worldMatrix = XMMatrixTranslation(0, -2.86, 0);
+
 	heightMap->sendData(renderer->getDeviceContext());
 	shadowShader->setShaderParameters(renderer->getDeviceContext(), worldMatrix, viewMatrix, projectionMatrix, textureMgr->getTexture(L"grass"), shadowMap->getDepthMapSRV(), light);
 	shadowShader->render(renderer->getDeviceContext(), heightMap->getIndexCount());
 
-	// Render model
-	worldMatrix = renderer->getWorldMatrix();
-	worldMatrix = XMMatrixTranslation(0.f, 7.f, 5.f);
-	XMMATRIX scaleMatrix = XMMatrixScaling(0.5f, 0.5f, 0.5f);
-	worldMatrix = XMMatrixMultiply(worldMatrix, scaleMatrix);
 
 	// Render models
+	worldMatrix = XMMatrixTranslation(PERSON_MOVE);
+	XMMATRIX scaleMatrix = XMMatrixScaling(PERSON_TORCH_SIZE);
+	worldMatrix = XMMatrixMultiply(worldMatrix, scaleMatrix);
+
 	person->sendData(renderer->getDeviceContext());
 	shadowShader->setShaderParameters(renderer->getDeviceContext(), worldMatrix, viewMatrix, projectionMatrix, textureMgr->getTexture(L"person"), shadowMap->getDepthMapSRV(), light);
 	shadowShader->render(renderer->getDeviceContext(), person->getIndexCount());
 
+
+	worldMatrix = XMMatrixTranslation(CAMP_MOVE);
+	scaleMatrix = XMMatrixScaling(CAMP_SIZE);
+	worldMatrix = XMMatrixMultiply(worldMatrix, scaleMatrix);
+
 	campfire->sendData(renderer->getDeviceContext());
 	shadowShader->setShaderParameters(renderer->getDeviceContext(), worldMatrix, viewMatrix, projectionMatrix, textureMgr->getTexture(L"campfire"), shadowMap->getDepthMapSRV(), light);
 	shadowShader->render(renderer->getDeviceContext(), campfire->getIndexCount());
+
+
+	XMMATRIX rotate = XMMatrixRotationY(TORCH_ROTATE);
+	worldMatrix = XMMatrixTranslation(TORCH_MOVE);
+	worldMatrix = XMMatrixMultiply(rotate, worldMatrix);
+	scaleMatrix = XMMatrixScaling(PERSON_TORCH_SIZE);
+	worldMatrix = XMMatrixMultiply(worldMatrix, scaleMatrix);
 
 	torch->sendData(renderer->getDeviceContext());
 	shadowShader->setShaderParameters(renderer->getDeviceContext(), worldMatrix, viewMatrix, projectionMatrix, textureMgr->getTexture(L"torch"), shadowMap->getDepthMapSRV(), light);
@@ -292,10 +321,10 @@ void App1::finalPass()
 bool App1::render()
 {
 
+
 	depthPass();
 
-	shadowPass();
-
+	//shadowPass();
 	manipulation();
 
 	//Render GUI

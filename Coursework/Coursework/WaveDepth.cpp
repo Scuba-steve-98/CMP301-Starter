@@ -1,12 +1,12 @@
-#include "WaveShader.h"
+#include "WaveDepth.h"
 
-WaveShader::WaveShader(ID3D11Device* device, HWND hwnd) : BaseShader(device, hwnd)
+WaveDepth::WaveDepth(ID3D11Device* device, HWND hwnd) : BaseShader(device, hwnd)
 {
-	initShader(L"wave_vs.cso", L"wave_ps.cso");
+	initShader(L"wave_vs.cso", L"wave_manip_ps.cso");
 }
 
 
-WaveShader::~WaveShader()
+WaveDepth::~WaveDepth()
 {
 	// Release the sampler state.
 	if (sampleState)
@@ -47,7 +47,7 @@ WaveShader::~WaveShader()
 }
 
 
-void WaveShader::initShader(const wchar_t* vsFilename, const wchar_t* psFilename)
+void WaveDepth::initShader(const wchar_t* vsFilename, const wchar_t* psFilename)
 {
 	D3D11_BUFFER_DESC matrixBufferDesc;
 	D3D11_SAMPLER_DESC samplerDesc;
@@ -116,7 +116,7 @@ void WaveShader::initShader(const wchar_t* vsFilename, const wchar_t* psFilename
 }
 
 
-void WaveShader::setShaderParameters(ID3D11DeviceContext* deviceContext, const XMMATRIX& worldMatrix, const XMMATRIX& viewMatrix, const XMMATRIX& projectionMatrix, ID3D11ShaderResourceView* texture, Light* light, float deltaTime, float amplitude, float freq, float speed, ID3D11ShaderResourceView* depthMap)
+void WaveDepth::setShaderParameters(ID3D11DeviceContext* deviceContext, const XMMATRIX& worldMatrix, const XMMATRIX& viewMatrix, const XMMATRIX& projectionMatrix, ID3D11ShaderResourceView* texture, Light* light, float deltaTime, float amplitude, float freq, float speed, ID3D11ShaderResourceView* depthMap)
 {
 	HRESULT result;
 	D3D11_MAPPED_SUBRESOURCE mappedResource;

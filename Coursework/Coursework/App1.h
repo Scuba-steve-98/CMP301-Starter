@@ -10,7 +10,10 @@
 #include "ShadowShader.h"
 #include "DepthShader.h"
 #include "WaveDepth.h"
+//#include "RainProcessing.h"
 #include "HeightDepth.h"
+#include "BlurHoorShader.h"
+#include "BlurVersShader.h"
 
 
 class App1 : public BaseApplication
@@ -25,10 +28,11 @@ public:
 
 protected:
 	bool render();
-	void manipulation();
 	void depthPass();
 	void shadowPass();
-	void secondPass();
+	void blurDepth();
+	void blurrification();
+	void blurrification2(); 
 	void finalPass();
 	void gui();
 
@@ -39,11 +43,17 @@ private:
 	ShadowShader* shadowShader;
 	DepthShader* depthShader;
 	ShadowMap* shadowMap;
+	ShadowMap* blur;
 	HeightDepth* heightDepth;
 	WaveDepth* waveDepth;
+	BlurHoorShader* horizontal;
+	BlurVersShader* vertical;
+	//RainProcessing* rainProcess;
 	Light* light;
-	Light* spotLight;
-	Light* pointLight;
+
+	RenderTexture* renderTex;
+	RenderTexture* renderHorTex;
+	RenderTexture* renderVerTex;
 
 	PlaneMesh* heightMap;
 	PlaneMesh* waves;
@@ -52,8 +62,9 @@ private:
 	Model* torch;
 	Model* campfire;
 
-	float amplitude, freq, speed, run_time;
-	//float displace;
+	float amplitude, freq, speed, run_time, timeDif, oldTime, bn, bf, fn, ff;
+	bool blurry;
+	//bool raining;
 
 
 	OrthoMesh* orthoMesh;

@@ -13,6 +13,24 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
+    <Filter Include="Source Files\Depth">
+      <UniqueIdentifier>{78fb74e7-f79c-4ac5-b930-20c1cfb53dda}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Shadow">
+      <UniqueIdentifier>{68c0df82-a8dc-4002-b502-935d7cb5e5ce}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Depth">
+      <UniqueIdentifier>{94c4aec6-a777-4cdf-8bca-add91e24f469}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Shadow">
+      <UniqueIdentifier>{bfc5fefc-4082-449c-89e4-e95fb0aa1bdb}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Blur">
+      <UniqueIdentifier>{504a3eab-8b09-425b-a29f-2bfe4958fa3b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Blur">
+      <UniqueIdentifier>{9af91b85-5994-4962-8255-7ab66234408b}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="App1.cpp">
@@ -21,52 +39,64 @@
     <ClCompile Include="Main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="DepthShader.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="HeightShader.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="ShadowShader.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="TextureShader.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="WaveShader.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="WaveDepth.cpp">
-      <Filter>Source Files</Filter>
+    <ClCompile Include="DepthShader.cpp">
+      <Filter>Source Files\Depth</Filter>
     </ClCompile>
     <ClCompile Include="HeightDepth.cpp">
-      <Filter>Source Files</Filter>
+      <Filter>Source Files\Depth</Filter>
+    </ClCompile>
+    <ClCompile Include="WaveDepth.cpp">
+      <Filter>Source Files\Depth</Filter>
+    </ClCompile>
+    <ClCompile Include="HeightShader.cpp">
+      <Filter>Source Files\Shadow</Filter>
+    </ClCompile>
+    <ClCompile Include="ShadowShader.cpp">
+      <Filter>Source Files\Shadow</Filter>
+    </ClCompile>
+    <ClCompile Include="WaveShader.cpp">
+      <Filter>Source Files\Shadow</Filter>
+    </ClCompile>
+    <ClCompile Include="BlurVersShader.cpp">
+      <Filter>Source Files\Blur</Filter>
+    </ClCompile>
+    <ClCompile Include="BlurHoorShader.cpp">
+      <Filter>Source Files\Blur</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="App1.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="DepthShader.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="HeightShader.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="ShadowShader.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="TextureShader.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="WaveShader.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="WaveDepth.h">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="DepthShader.h">
+      <Filter>Header Files\Depth</Filter>
     </ClInclude>
     <ClInclude Include="HeightDepth.h">
-      <Filter>Header Files</Filter>
+      <Filter>Header Files\Depth</Filter>
+    </ClInclude>
+    <ClInclude Include="WaveDepth.h">
+      <Filter>Header Files\Depth</Filter>
+    </ClInclude>
+    <ClInclude Include="HeightShader.h">
+      <Filter>Header Files\Shadow</Filter>
+    </ClInclude>
+    <ClInclude Include="ShadowShader.h">
+      <Filter>Header Files\Shadow</Filter>
+    </ClInclude>
+    <ClInclude Include="WaveShader.h">
+      <Filter>Header Files\Shadow</Filter>
+    </ClInclude>
+    <ClInclude Include="BlurHoorShader.h">
+      <Filter>Header Files\Blur</Filter>
+    </ClInclude>
+    <ClInclude Include="BlurVersShader.h">
+      <Filter>Header Files\Blur</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -80,12 +110,6 @@
       <Filter>Resource Files</Filter>
     </FxCompile>
     <FxCompile Include="wave_vs.hlsl">
-      <Filter>Resource Files</Filter>
-    </FxCompile>
-    <FxCompile Include="spotlight_ps.hlsl">
-      <Filter>Resource Files</Filter>
-    </FxCompile>
-    <FxCompile Include="spotlight_vs.hlsl">
       <Filter>Resource Files</Filter>
     </FxCompile>
     <FxCompile Include="shadow_ps.hlsl">
@@ -110,6 +134,21 @@
       <Filter>Resource Files</Filter>
     </FxCompile>
     <FxCompile Include="wave_manip_ps.hlsl">
+      <Filter>Resource Files</Filter>
+    </FxCompile>
+    <FxCompile Include="blurVer_ps.hlsl">
+      <Filter>Resource Files</Filter>
+    </FxCompile>
+    <FxCompile Include="blur_vs.hlsl">
+      <Filter>Resource Files</Filter>
+    </FxCompile>
+    <FxCompile Include="blurHor_ps.hlsl">
+      <Filter>Resource Files</Filter>
+    </FxCompile>
+    <FxCompile Include="height_manip_vs.hlsl">
+      <Filter>Resource Files</Filter>
+    </FxCompile>
+    <FxCompile Include="wave_manip_vs.hlsl">
       <Filter>Resource Files</Filter>
     </FxCompile>
   </ItemGroup>

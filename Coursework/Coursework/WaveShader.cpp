@@ -53,6 +53,7 @@ void WaveShader::initShader(const wchar_t* vsFilename, const wchar_t* psFilename
 	D3D11_SAMPLER_DESC samplerDesc;
 	D3D11_BUFFER_DESC lightBufferDesc;
 	D3D11_BUFFER_DESC timeBufferDesc;
+	D3D11_BUFFER_DESC camBufferDesc;
 
 	// Load (+ compile) shader files
 	loadVertexShader(vsFilename);
@@ -113,32 +114,42 @@ void WaveShader::initShader(const wchar_t* vsFilename, const wchar_t* psFilename
 	timeBufferDesc.MiscFlags = 0;
 	timeBufferDesc.StructureByteStride = 0;
 	renderer->CreateBuffer(&timeBufferDesc, NULL, &timeBuffer);
+
+	// Setup time buffer
+	camBufferDesc.Usage = D3D11_USAGE_DYNAMIC;
+	camBufferDesc.ByteWidth = sizeof(TimeBufferType);
+	camBufferDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+	camBufferDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+	camBufferDesc.MiscFlags = 0;
+	camBufferDesc.StructureByteStride = 0;
+	renderer->CreateBuffer(&camBufferDesc, NULL, &camBuffer);
 }
 
 
-void WaveShader::setShaderParameters(ID3D11DeviceContext* deviceContext, const XMMATRIX& worldMatrix, const XMMATRIX& viewMatrix, const XMMATRIX& projectionMatrix, ID3D11ShaderResourceView* texture, Light* light, float deltaTime, float amplitude, float freq, float speed, ID3D11ShaderResourceView* depthMap)
+void WaveShader::setShaderParameters(ID3D11DeviceContext* deviceContext, const XMMATRIX& worldMatrix, const XMMATRIX& viewMatrix, const XMMATRIX& projectionMatrix, ID3D11ShaderResourceView* texture, Light* light, float deltaTime, float amplitude, float freq, float speed, ID3D11ShaderResourceView* depthMap, FPCamera* camera, const XMMATRIX& lightViewMatrix, const XMMATRIX& lightProjMatrix)
 {
 	HRESULT result;
 	D3D11_MAPPED_SUBRESOURCE mappedResource;
 	MatrixBufferType* dataPtr;
 
-	XMMATRIX tworld, tview, tproj, tLightViewMatrix, tLightProjectionMatrix;
+	XMMATRIX tworld, tview, tproj, tLightView, tLightProj;
 
 
 	// Transpose the matrices to prepare them for the shader.
 	tworld = XMMatrixTranspose(worldMatrix);
 	tview = XMMatrixTranspose(viewMatrix);
 	tproj = XMMatrixTranspose(projectionMatrix);
-	tLightViewMatrix = XMMatrixTranspose(light->getViewMatrix());
-	tLightProjectionMatrix = XMMatrixTranspose(light->getProjectionMatrix());
+	tLightView = XMMatrixTranspose(lightViewMatrix);
+	tLightProj = XMMatrixTranspose(lightProjMatrix);
 
-	result = deviceContext->Map(matrixBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedResource);
+
+	deviceContext->Map(matrixBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedResource);
 	dataPtr = (MatrixBufferType*)mappedResource.pData;
 	dataPtr->world = tworld;// worldMatrix;
 	dataPtr->view = tview;
 	dataPtr->projection = tproj;
-	dataPtr->lightView = tLightViewMatrix;
-	dataPtr->lightProjection = tLightProjectionMatrix;
+	dataPtr->lightView = tLightView;
+	dataPtr->lightProjection = tLightProj;
 	deviceContext->Unmap(matrixBuffer, 0);
 	deviceContext->VSSetConstantBuffers(0, 1, &matrixBuffer);
 
@@ -147,10 +158,11 @@ void WaveShader::setShaderParameters(ID3D11DeviceContext* deviceContext, const X
 	LightBufferType* lightPtr;
 	deviceContext->Map(lightBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedResource);
 	lightPtr = (LightBufferType*)mappedResource.pData;
-	lightPtr->diffuse = light->getDiffuseColour();
-	lightPtr->ambient = light->getAmbientColour();
-	lightPtr->position = light->getPosition();
-	lightPtr->padding = 0.0f;
+	lightPtr->lightDirection = light->getDirection();
+	lightPtr->diffuseColour = light->getDiffuseColour();
+	lightPtr->ambientColour = light->getAmbientColour();
+	lightPtr->specularColour = light->getSpecularColour();
+	lightPtr->specularPower = light->getSpecularPower();
 	deviceContext->Unmap(lightBuffer, 0);
 	deviceContext->PSSetConstantBuffers(0, 1, &lightBuffer);
 
@@ -165,7 +177,17 @@ void WaveShader::setShaderParameters(ID3D11DeviceContext* deviceContext, const X
 	deviceContext->Unmap(timeBuffer, 0);
 	deviceContext->VSSetConstantBuffers(1, 1, &timeBuffer);
 
+
+	CamBufferType* camptr;
+	deviceContext->Map(camBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedResource);
+	camptr = (CamBufferType*)mappedResource.pData;
+	camptr->cameraPosition = camera->getPosition();
+	deviceContext->Unmap(camBuffer, 0);
+	deviceContext->VSSetConstantBuffers(2, 1, &camBuffer);
+
 	// Set shader texture resource in the pixel shader.
 	deviceContext->PSSetShaderResources(0, 1, &texture);
+	deviceContext->PSSetShaderResources(1, 1, &depthMap);
 	deviceContext->PSSetSamplers(0, 1, &sampleState);
+	deviceContext->PSSetSamplers(1, 1, &sampleStateShadow);
 }

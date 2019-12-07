@@ -30,7 +30,7 @@ public:
 	HeightDepth(ID3D11Device* device, HWND hwnd);
 	~HeightDepth();
 
-	void setShaderParameters(ID3D11DeviceContext* deviceContext, const XMMATRIX& world, const XMMATRIX& view, const XMMATRIX& projection, ID3D11ShaderResourceView* texture, Light* light, ID3D11ShaderResourceView* heightmap, ID3D11ShaderResourceView* depthMap);
+	void setShaderParameters(ID3D11DeviceContext* deviceContext, const XMMATRIX& world, const XMMATRIX& view, const XMMATRIX& projection, ID3D11ShaderResourceView* texture, Light* light, ID3D11ShaderResourceView* heightmap);
 
 private:
 	void initShader(const wchar_t* cs, const wchar_t* ps);

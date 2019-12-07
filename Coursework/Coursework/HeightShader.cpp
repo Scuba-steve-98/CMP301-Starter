@@ -10,28 +10,21 @@ HeightShader::HeightShader(ID3D11Device* device, HWND hwnd) : BaseShader(device,
 
 HeightShader::~HeightShader()
 {
-	// Release the sampler state.
 	if (sampleState)
 	{
 		sampleState->Release();
 		sampleState = 0;
 	}
-
-	// Release the matrix constant buffer.
 	if (matrixBuffer)
 	{
 		matrixBuffer->Release();
 		matrixBuffer = 0;
 	}
-
-	// Release the layout.
 	if (layout)
 	{
 		layout->Release();
 		layout = 0;
 	}
-
-	// Release the light constant buffer.
 	if (lightBuffer)
 	{
 		lightBuffer->Release();
@@ -48,7 +41,6 @@ void HeightShader::initShader(const wchar_t* vsFilename, const wchar_t* psFilena
 	D3D11_BUFFER_DESC matrixBufferDesc;
 	D3D11_SAMPLER_DESC samplerDesc;
 	D3D11_BUFFER_DESC lightBufferDesc;
-	D3D11_BUFFER_DESC timeBufferDesc;
 
 	// Load (+ compile) shader files
 	loadVertexShader(vsFilename);
@@ -91,8 +83,6 @@ void HeightShader::initShader(const wchar_t* vsFilename, const wchar_t* psFilena
 	renderer->CreateSamplerState(&samplerDesc, &sampleStateShadow);
 
 	// Setup light buffer
-	// Setup the description of the light dynamic constant buffer that is in the pixel shader.
-	// Note that ByteWidth always needs to be a multiple of 16 if using D3D11_BIND_CONSTANT_BUFFER or CreateBuffer will fail.
 	lightBufferDesc.Usage = D3D11_USAGE_DYNAMIC;
 	lightBufferDesc.ByteWidth = sizeof(LightBufferType);
 	lightBufferDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
@@ -103,25 +93,22 @@ void HeightShader::initShader(const wchar_t* vsFilename, const wchar_t* psFilena
 }
 
 
-void HeightShader::setShaderParameters(ID3D11DeviceContext* deviceContext, const XMMATRIX& worldMatrix, const XMMATRIX& viewMatrix, const XMMATRIX& projectionMatrix, ID3D11ShaderResourceView* texture, Light* light, ID3D11ShaderResourceView* heightmap, ID3D11ShaderResourceView* depthMap)
+void HeightShader::setShaderParameters(ID3D11DeviceContext* deviceContext, const XMMATRIX& worldMatrix, const XMMATRIX& viewMatrix, const XMMATRIX& projectionMatrix, ID3D11ShaderResourceView* texture, Light* light, ID3D11ShaderResourceView* heightmap, ID3D11ShaderResourceView* depthMap, const XMMATRIX& lightViewMatrix, const XMMATRIX& lightProjMatrix)
 {
-	HRESULT result;
 	D3D11_MAPPED_SUBRESOURCE mappedResource;
 
-	XMMATRIX tworld, tview, tproj, tLightViewMatrix, tLightProjectionMatrix;
-
-
 	// Transpose the matrices to prepare them for the shader.
-	tworld = XMMatrixTranspose(worldMatrix);
-	tview = XMMatrixTranspose(viewMatrix);
-	tproj = XMMatrixTranspose(projectionMatrix);
-	tLightViewMatrix = XMMatrixTranspose(light->getViewMatrix());
-	tLightProjectionMatrix = XMMatrixTranspose(light->getProjectionMatrix());
+	XMMATRIX tworld = XMMatrixTranspose(worldMatrix);
+	XMMATRIX tview = XMMatrixTranspose(viewMatrix);
+	XMMATRIX tproj = XMMatrixTranspose(projectionMatrix);
+	XMMATRIX tLightViewMatrix = XMMatrixTranspose(lightViewMatrix);
+	XMMATRIX tLightProjectionMatrix = XMMatrixTranspose(lightProjMatrix);
 
+		// Lock the constant buffer so it can be written to.
 	MatrixBufferType* dataPtr;
-	result = deviceContext->Map(matrixBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedResource);
+	deviceContext->Map(matrixBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedResource);
 	dataPtr = (MatrixBufferType*)mappedResource.pData;
-	dataPtr->world = tworld;// worldMatrix;
+	dataPtr->world = tworld;
 	dataPtr->view = tview;
 	dataPtr->projection = tproj;
 	dataPtr->lightView = tLightViewMatrix;
@@ -134,18 +121,20 @@ void HeightShader::setShaderParameters(ID3D11DeviceContext* deviceContext, const
 	LightBufferType* lightPtr;
 	deviceContext->Map(lightBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedResource);
 	lightPtr = (LightBufferType*)mappedResource.pData;
-	lightPtr->diffuse = light->getDiffuseColour();
-	lightPtr->ambient = light->getAmbientColour();
-	lightPtr->position = light->getPosition();
-	lightPtr->padding = 0.0f;
+	lightPtr->ambientColour = light->getAmbientColour();
+	lightPtr->diffuseColour = light->getDiffuseColour();
+	lightPtr->lightDirection = light->getDirection();
+	lightPtr->padding = 0.f;
 	deviceContext->Unmap(lightBuffer, 0);
 	deviceContext->PSSetConstantBuffers(0, 1, &lightBuffer);
 
-	// Set shader texture resource in the pixel shader.
-	deviceContext->PSSetShaderResources(0, 1, &texture);
-	deviceContext->PSSetSamplers(0, 1, &sampleState);
-
 	// Pass the heightmap through
 	deviceContext->VSSetShaderResources(0, 1, &heightmap);
-	deviceContext->VSSetSamplers(0, 1, &sampleState);
+
+	// Set shader texture resource in the pixel shader.
+	deviceContext->PSSetShaderResources(0, 1, &texture);
+	deviceContext->PSSetShaderResources(1, 1, &depthMap);
+	deviceContext->PSSetSamplers(0, 1, &sampleState);
+	deviceContext->PSSetSamplers(1, 1, &sampleStateShadow);
+
 }

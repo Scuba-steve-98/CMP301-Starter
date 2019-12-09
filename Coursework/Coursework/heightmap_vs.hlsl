@@ -38,30 +38,30 @@ struct OutputType
 OutputType main(InputType input)
 {
     OutputType output;
-//#define AMPLITUDE 20
-//	#define OFFSET 1.0f
-//	#define UV_OFFSET (1/185)
+#define AMPLITUDE 20
+	#define OFFSET 1.0f
+	#define UV_OFFSET (1/185)
 	
-//    float4 height, heightNormalA, heightNormalB;
-//    float2 north, south, east, west;
-//    float2 texB, texC;
+    float4 height, heightNormalA, heightNormalB;
+    float2 north, south, east, west;
+    float2 texB, texC;
 
 
-//    height = texture0.SampleLevel(sampler0, input.tex, 0);
-//    input.position.y = (height.x * AMPLITUDE);
+    height = texture0.SampleLevel(sampler0, input.tex, 0);
+    input.position.y = (height.x * AMPLITUDE);
 
 
-//	texB.x = input.tex.x + 0.01;
-//	texB.y = input.tex.y;
-//	heightNormalA = texture0.SampleLevel(sampler0, texB, 0);
+	texB.x = input.tex.x + 0.01;
+	texB.y = input.tex.y;
+	heightNormalA = texture0.SampleLevel(sampler0, texB, 0);
 
-//	texC.x = input.tex.x;
-//	texC.y = input.tex.y + 0.01;
-//	heightNormalB = texture0.SampleLevel(sampler0, texC, 0);
+	texC.x = input.tex.x;
+	texC.y = input.tex.y + 0.01;
+	heightNormalB = texture0.SampleLevel(sampler0, texC, 0);
 
-//	input.normal.x = input.position.y - (heightNormalA.x * AMPLITUDE);
-//	input.normal.z = input.position.y - (heightNormalB.x * AMPLITUDE);
-//	input.normal.y = 1;
+	input.normal.x = input.position.y - (heightNormalA.x * AMPLITUDE);
+	input.normal.z = input.position.y - (heightNormalB.x * AMPLITUDE);
+	input.normal.y = 1;
 
 
 	// Calculate the position of the vertex against the world, view, and projection matrices.

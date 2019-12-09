@@ -31,8 +31,8 @@ protected:
 	void depthPass();
 	void shadowPass();
 	void blurDepth();
-	void blurrification();
-	void blurrification2(); 
+	void horBlurrification();
+	void versBlurrification();
 	void finalPass();
 	void gui();
 

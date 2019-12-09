@@ -31,6 +31,18 @@
     <Filter Include="Source Files\Blur">
       <UniqueIdentifier>{9af91b85-5994-4962-8255-7ab66234408b}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Resource Files\Blur">
+      <UniqueIdentifier>{c5e02cb3-5a2a-4be3-a5ae-011a0666faa3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resource Files\Manipulation">
+      <UniqueIdentifier>{ceffb847-0ab1-4773-ac22-797f377c8506}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resource Files\Depth">
+      <UniqueIdentifier>{c782bec6-adf0-4df2-a195-6bf4d0cd0891}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resource Files\Shadow">
+      <UniqueIdentifier>{644e5f00-21c5-453a-a38d-40764c746456}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="App1.cpp">
@@ -100,56 +112,59 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <FxCompile Include="wave_ps.hlsl">
-      <Filter>Resource Files</Filter>
-    </FxCompile>
-    <FxCompile Include="heightmap_ps.hlsl">
-      <Filter>Resource Files</Filter>
-    </FxCompile>
-    <FxCompile Include="heightmap_vs.hlsl">
-      <Filter>Resource Files</Filter>
-    </FxCompile>
-    <FxCompile Include="wave_vs.hlsl">
-      <Filter>Resource Files</Filter>
-    </FxCompile>
-    <FxCompile Include="shadow_ps.hlsl">
-      <Filter>Resource Files</Filter>
-    </FxCompile>
-    <FxCompile Include="depth_ps.hlsl">
-      <Filter>Resource Files</Filter>
-    </FxCompile>
-    <FxCompile Include="depth_vs.hlsl">
-      <Filter>Resource Files</Filter>
-    </FxCompile>
-    <FxCompile Include="shadow_vs.hlsl">
-      <Filter>Resource Files</Filter>
-    </FxCompile>
     <FxCompile Include="texture_vs.hlsl">
       <Filter>Resource Files</Filter>
     </FxCompile>
     <FxCompile Include="texture_ps.hlsl">
       <Filter>Resource Files</Filter>
     </FxCompile>
-    <FxCompile Include="height_manip_ps.hlsl">
-      <Filter>Resource Files</Filter>
-    </FxCompile>
-    <FxCompile Include="wave_manip_ps.hlsl">
-      <Filter>Resource Files</Filter>
+    <FxCompile Include="blurHor_ps.hlsl">
+      <Filter>Resource Files\Blur</Filter>
     </FxCompile>
     <FxCompile Include="blurVer_ps.hlsl">
-      <Filter>Resource Files</Filter>
+      <Filter>Resource Files\Blur</Filter>
     </FxCompile>
-    <FxCompile Include="blur_vs.hlsl">
-      <Filter>Resource Files</Filter>
+    <FxCompile Include="wave_vs.hlsl">
+      <Filter>Resource Files\Manipulation</Filter>
     </FxCompile>
-    <FxCompile Include="blurHor_ps.hlsl">
-      <Filter>Resource Files</Filter>
+    <FxCompile Include="wave_ps.hlsl">
+      <Filter>Resource Files\Manipulation</Filter>
+    </FxCompile>
+    <FxCompile Include="heightmap_vs.hlsl">
+      <Filter>Resource Files\Manipulation</Filter>
+    </FxCompile>
+    <FxCompile Include="heightmap_ps.hlsl">
+      <Filter>Resource Files\Manipulation</Filter>
+    </FxCompile>
+    <FxCompile Include="depth_ps.hlsl">
+      <Filter>Resource Files\Depth</Filter>
+    </FxCompile>
+    <FxCompile Include="depth_vs.hlsl">
+      <Filter>Resource Files\Depth</Filter>
+    </FxCompile>
+    <FxCompile Include="height_manip_ps.hlsl">
+      <Filter>Resource Files\Depth</Filter>
     </FxCompile>
     <FxCompile Include="height_manip_vs.hlsl">
-      <Filter>Resource Files</Filter>
+      <Filter>Resource Files\Depth</Filter>
+    </FxCompile>
+    <FxCompile Include="wave_manip_ps.hlsl">
+      <Filter>Resource Files\Depth</Filter>
     </FxCompile>
     <FxCompile Include="wave_manip_vs.hlsl">
-      <Filter>Resource Files</Filter>
+      <Filter>Resource Files\Depth</Filter>
+    </FxCompile>
+    <FxCompile Include="shadow_vs.hlsl">
+      <Filter>Resource Files\Shadow</Filter>
+    </FxCompile>
+    <FxCompile Include="shadow_ps.hlsl">
+      <Filter>Resource Files\Shadow</Filter>
+    </FxCompile>
+    <FxCompile Include="blurHor_vs.hlsl">
+      <Filter>Resource Files\Blur</Filter>
+    </FxCompile>
+    <FxCompile Include="blurVers_vs.hlsl">
+      <Filter>Resource Files\Blur</Filter>
     </FxCompile>
   </ItemGroup>
 </Project>

@@ -3,7 +3,7 @@
 
 BlurVersShader::BlurVersShader(ID3D11Device* device, HWND hwnd) : BaseShader(device, hwnd)
 {
-	initShader(L"blur_vs.cso", L"blurVer_ps.cso");
+	initShader(L"blurVers_vs.cso", L"blurVer_ps.cso");
 }
 
 

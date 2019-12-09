@@ -1,4 +1,3 @@
-
 Texture2D texture0 : register(t0);
 Texture2D depthTexture : register(t1);
 SamplerState sampler0 : register(s0);
@@ -80,7 +79,7 @@ float4 main(InputType input) : SV_TARGET
 {
 	float4 colour;
 	float depthValue;
-	float weight0, weight1, weight2, weight3, weight4, weight5, weight6, weight7;
+	float weight[8], weight0, weight1, weight2, weight3, weight4, weight5, weight6, weight7;
 
 	depthValue = depthTexture.Sample(depthSampler, input.tex).r;
 
@@ -95,75 +94,79 @@ float4 main(InputType input) : SV_TARGET
 		switch (blurFactor)
 		{
 			case 1:
-				weight0 = 0.682689f;
-				weight1 = 0.157305f;
-				weight2 = 0.00135f;
-				weight3 = 0.0f;
-				weight4 = 0.0f;
-				weight5 = 0.0f;
-				weight6 = 0.0f;
-				weight7 = 0.0f;
+				weight[0] = 0.682689f;
+				weight[1] = 0.157305f;
+				weight[2] = 0.00135f;
+				weight[3] = 0.0f;
+				weight[4] = 0.0f;
+				weight[5] = 0.0f;
+				weight[6] = 0.0f;
+				weight[7] = 0.0f;
 				break;
 			case 2:
-				weight0 = 0.382925f;
-				weight1 = 0.24173f;
-				weight2 = 0.060598f;
-				weight3 = 0.005977f;
-				weight4 = 0.000229f;
-				weight5 = 0.000003f;
-				weight6 = 0.0f;
-				weight7 = 0.0f;
+				weight[0] = 0.382925f;
+				weight[1] = 0.24173f;
+				weight[2] = 0.060598f;
+				weight[3] = 0.005977f;
+				weight[4] = 0.000229f;
+				weight[5] = 0.000003f;
+				weight[6] = 0.0f;
+				weight[7] = 0.0f;
 				break;
 			case 3:
-				weight0 = 0.261117f;
-				weight1 = 0.210786f;
-				weight2 = 0.110865f;
-				weight3 = 0.037975f;
-				weight4 = 0.008465f;
-				weight5 = 0.001227f;
-				weight6 = 0.000116f;
-				weight7 = 0.000007f;
+				weight[0] = 0.261117f;
+				weight[1] = 0.210786f;
+				weight[2] = 0.110865f;
+				weight[3] = 0.037975f;
+				weight[4] = 0.008465f;
+				weight[5] = 0.001227f;
+				weight[6] = 0.000116f;
+				weight[7] = 0.000007f;
 				break;
 			case 4:
-				weight0 = 0.197448f;
-				weight1 = 0.174697f;
-				weight2 = 0.120999f;
-				weight3 = 0.065602f;
-				weight4 = 0.02784f;
-				weight5 = 0.009246f;
-				weight6 = 0.002403f;
-				weight7 = 0.000489f;
+				weight[0] = 0.197448f;
+				weight[1] = 0.174697f;
+				weight[2] = 0.120999f;
+				weight[3] = 0.065602f;
+				weight[4] = 0.02784f;
+				weight[5] = 0.009246f;
+				weight[6] = 0.002403f;
+				weight[7] = 0.000489f;
 				break;
 			case 5:
-				weight0 = 0.158949f;
-				weight1 = 0.146884f;
-				weight2 = 0.115911f;
-				weight3 = 0.078109f;
-				weight4 = 0.044948f;
-				weight5 = 0.022087f;
-				weight6 = 0.009267f;
-				weight7 = 0.00332f;
+				weight[0] = 0.158949f;
+				weight[1] = 0.146884f;
+				weight[2] = 0.115911f;
+				weight[3] = 0.078109f;
+				weight[4] = 0.044948f;
+				weight[5] = 0.022087f;
+				weight[6] = 0.009267f;
+				weight[7] = 0.00332f;
 				break;
 			case 6:
-				weight0 = 0.134032f;
-				weight1 = 0.126854f;
-				weight2 = 0.107545f;
-				weight3 = 0.08167f;
-				weight4 = 0.055555f;
-				weight5 = 0.033851f;
-				weight6 = 0.018476f;
-				weight7 = 0.009033f;
+				weight[0] = 0.134032f;
+				weight[1] = 0.126854f;
+				weight[2] = 0.107545f;
+				weight[3] = 0.08167f;
+				weight[4] = 0.055555f;
+				weight[5] = 0.033851f;
+				weight[6] = 0.018476f;
+				weight[7] = 0.009033f;
 				break;
 			default:
 			// Error occured - no blur
-				weight0 = 1.0f;
-				weight1 = 0.0f;
-				weight2 = 0.0f;
-				weight3 = 0.0f;
-				weight4 = 0.0f;
-				weight5 = 0.0f;
-				weight6 = 0.0f;
-				weight7 = 0.0f;
+				for (int i = 0; i < 8; i++)
+				{
+					weight[i] = 0.5f;
+				}
+				//weight0 = 1.0f;
+				//weight1 = 0.0f;
+				//weight2 = 0.0f;
+				//weight3 = 0.0f;
+				//weight4 = 0.0f;
+				//weight5 = 0.0f;
+				//weight6 = 0.0f;
+				//weight7 = 0.0f;
 				break;
 		}
 
@@ -174,21 +177,31 @@ float4 main(InputType input) : SV_TARGET
 		float texelSize = 1.0f / screenHeight;
 
 		// Add the horizontal pixels to the colour by the specific weight of each
-		colour += texture0.Sample(sampler0, input.tex + float2(0.0f, texelSize * -7.0f)) * weight7;
-		colour += texture0.Sample(sampler0, input.tex + float2(0.0f, texelSize * -6.0f)) * weight6;
-		colour += texture0.Sample(sampler0, input.tex + float2(0.0f, texelSize * -5.0f)) * weight5;
-		colour += texture0.Sample(sampler0, input.tex + float2(0.0f, texelSize * -4.0f)) * weight4;
-		colour += texture0.Sample(sampler0, input.tex + float2(0.0f, texelSize * -3.0f)) * weight3;
-		colour += texture0.Sample(sampler0, input.tex + float2(0.0f, texelSize * -2.0f)) * weight2;
-		colour += texture0.Sample(sampler0, input.tex + float2(0.0f, texelSize * -1.0f)) * weight1;
-		colour += texture0.Sample(sampler0, input.tex) * weight0;
-		colour += texture0.Sample(sampler0, input.tex + float2(0.0f, texelSize * 1.0f)) * weight1;
-		colour += texture0.Sample(sampler0, input.tex + float2(0.0f, texelSize * 2.0f)) * weight2;
-		colour += texture0.Sample(sampler0, input.tex + float2(0.0f, texelSize * 3.0f)) * weight3;
-		colour += texture0.Sample(sampler0, input.tex + float2(0.0f, texelSize * 4.0f)) * weight4;
-		colour += texture0.Sample(sampler0, input.tex + float2(0.0f, texelSize * 5.0f)) * weight5;
-		colour += texture0.Sample(sampler0, input.tex + float2(0.0f, texelSize * 6.0f)) * weight6;
-		colour += texture0.Sample(sampler0, input.tex + float2(0.0f, texelSize * 7.0f)) * weight7;
+		for (int i = -7; i < 8; i++)
+		{
+			int index = 0;
+			if (i < 0)
+				index = -i;
+			else
+				index = i;
+
+			colour += texture0.Sample(sampler0, input.tex + float2(0.0f, texelSize * -7.0f)) * weight[index];
+		}
+		//colour += texture0.Sample(sampler0, input.tex + float2(0.0f, texelSize * -7.0f)) * weight7;
+		//colour += texture0.Sample(sampler0, input.tex + float2(0.0f, texelSize * -6.0f)) * weight6;
+		//colour += texture0.Sample(sampler0, input.tex + float2(0.0f, texelSize * -5.0f)) * weight5;
+		//colour += texture0.Sample(sampler0, input.tex + float2(0.0f, texelSize * -4.0f)) * weight4;
+		//colour += texture0.Sample(sampler0, input.tex + float2(0.0f, texelSize * -3.0f)) * weight3;
+		//colour += texture0.Sample(sampler0, input.tex + float2(0.0f, texelSize * -2.0f)) * weight2;
+		//colour += texture0.Sample(sampler0, input.tex + float2(0.0f, texelSize * -1.0f)) * weight1;
+		//colour += texture0.Sample(sampler0, input.tex) * weight0;
+		//colour += texture0.Sample(sampler0, input.tex + float2(0.0f, texelSize * 1.0f)) * weight1;
+		//colour += texture0.Sample(sampler0, input.tex + float2(0.0f, texelSize * 2.0f)) * weight2;
+		//colour += texture0.Sample(sampler0, input.tex + float2(0.0f, texelSize * 3.0f)) * weight3;
+		//colour += texture0.Sample(sampler0, input.tex + float2(0.0f, texelSize * 4.0f)) * weight4;
+		//colour += texture0.Sample(sampler0, input.tex + float2(0.0f, texelSize * 5.0f)) * weight5;
+		//colour += texture0.Sample(sampler0, input.tex + float2(0.0f, texelSize * 6.0f)) * weight6;
+		//colour += texture0.Sample(sampler0, input.tex + float2(0.0f, texelSize * 7.0f)) * weight7;
 
 		// Set the alpha channel to one
 		colour.a = 1.0f;

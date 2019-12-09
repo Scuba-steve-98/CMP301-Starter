@@ -4,7 +4,7 @@
 
 BlurHoorShader::BlurHoorShader(ID3D11Device* device, HWND hwnd) : BaseShader(device, hwnd)
 {
-	initShader(L"blur_vs.cso", L"blurHor_ps.cso");
+	initShader(L"blurHor_vs.cso", L"blurHor_ps.cso");
 }
 
 

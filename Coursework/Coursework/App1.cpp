@@ -40,6 +40,10 @@ App1::App1()
 
 void App1::init(HINSTANCE hinstance, HWND hwnd, int screenWidth, int screenHeight, Input* in, bool VSYNC, bool FULL_SCREEN)
 {
+	bn = 0.63f;
+	bf = 0.999f;
+	fn = 0.75f;
+	ff = 0.99f;
 	// Call super/parent init function (required!)
 	BaseApplication::init(hinstance, hwnd, screenWidth, screenHeight, in, VSYNC, FULL_SCREEN);
 
@@ -223,6 +227,8 @@ bool App1::frame()
 
 void App1::depthPass()
 {
+	// Clear the scene. (default blue colour)
+	renderer->beginScene(0.39f, 0.58f, 0.92f, 1.0f);
 	// Calculate run time for manipulation
 	/*oldTime = run_time;*/
 
@@ -345,10 +351,10 @@ void App1::shadowPass()
 
 
 	//Render GUI
-	gui();
+	//gui();
 
 	////Present the rendered scene to the screen.
-	renderer->endScene();
+	//renderer->endScene();
 	renderer->setBackBufferRenderTarget();
 }
 
@@ -413,7 +419,7 @@ void App1::blurDepth()
 }
 
 
-void App1::blurrification()
+void App1::horBlurrification()
 {
 	XMMATRIX worldMatrix, baseViewMatrix, orthoMatrix;
 
@@ -437,7 +443,7 @@ void App1::blurrification()
 }
 
 
-void App1::blurrification2() // electric boogaloo
+void App1::versBlurrification()
 {
 	XMMATRIX worldMatrix, baseViewMatrix, orthoMatrix;
 
@@ -452,7 +458,7 @@ void App1::blurrification2() // electric boogaloo
 	// Render for Horizontal Blur
 	renderer->setZBuffer(false);
 	orthoMesh->sendData(renderer->getDeviceContext());
-	vertical->setShaderParameters(renderer->getDeviceContext(), worldMatrix, baseViewMatrix, orthoMatrix, renderHorTex->getShaderResourceView(), blur->getDepthMapSRV(), screenSizeY, FOCUS_NEAR, FOCUS_FAR, BLUR_NEAR, BLUR_FAR);
+	vertical->setShaderParameters(renderer->getDeviceContext(), worldMatrix, baseViewMatrix, orthoMatrix, renderHorTex->getShaderResourceView(), blur->getDepthMapSRV(), screenSizeY, fn, ff, bn, bf);//FOCUS_NEAR, FOCUS_FAR, BLUR_NEAR, BLUR_FAR);
 	vertical->render(renderer->getDeviceContext(), orthoMesh->getIndexCount());
 	renderer->setZBuffer(true);
 
@@ -463,9 +469,6 @@ void App1::blurrification2() // electric boogaloo
 
 void App1::finalPass()
 {
-	// Clear the scene. (default blue colour)
-	renderer->beginScene(0.39f, 0.58f, 0.92f, 1.0f);
-
 	// RENDER THE RENDER TEXTURE SCENE
 	// Requires 2D rendering and an ortho mesh.
 	renderer->setZBuffer(false);
@@ -487,10 +490,10 @@ void App1::finalPass()
 	renderer->setZBuffer(true);
 
 	//// Render GUI
-	//gui();
+	gui();
 
 	//// Present the rendered scene to the screen.
-	//renderer->endScene();
+	renderer->endScene();
 }
 
 // Rain Post Process Effect R.I.P
@@ -532,9 +535,9 @@ bool App1::render()
 	{
 		blurDepth();
 
-		blurrification();
+		horBlurrification();
 
-		blurrification2();
+		versBlurrification();
 	}
 
 

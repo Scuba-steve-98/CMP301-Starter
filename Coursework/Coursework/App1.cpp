@@ -102,6 +102,8 @@ void App1::init(HINSTANCE hinstance, HWND hwnd, int screenWidth, int screenHeigh
 	blurry = true;
 	run_time = 0.f;
 	timeDif = 0.f;
+	x = screenWidth;
+	y = screenHeight;
 }
 
 
@@ -227,15 +229,10 @@ bool App1::frame()
 
 void App1::depthPass()
 {
-	// Clear the scene. (default blue colour)
-	renderer->beginScene(0.39f, 0.58f, 0.92f, 1.0f);
-	// Calculate run time for manipulation
-	/*oldTime = run_time;*/
-
+	// Set the render target to be the render to texture and clear it
+	renderTex->setRenderTarget(renderer->getDeviceContext());
+	renderTex->clearRenderTarget(renderer->getDeviceContext(), 0.30f, 0.50f, 0.40f, 1.0f);
 	run_time += timer->getTime();
-	
-	/*
-	timeDif = run_time - oldTime;*/
 
 	// Set the render target to be the render to texture.
 	shadowMap->BindDsvAndSetNullRenderTarget(renderer->getDeviceContext());
@@ -359,116 +356,31 @@ void App1::shadowPass()
 }
 
 
-void App1::blurDepth()
-{
-	// Set the render target to be the render to texture.
-	blur->BindDsvAndSetNullRenderTarget(renderer->getDeviceContext());
-
-	// Generate the view matrix based on the camera's position.
-	camera->update();
-
-	// get the world, view, and projection matrices from the camera and d3d objects.
-	XMMATRIX worldMatrix = renderer->getWorldMatrix();
-	XMMATRIX viewMatrix = camera->getViewMatrix();
-	XMMATRIX projectionMatrix = XMMatrixPerspectiveFovLH((float)XM_PI / 4.0f, renderTex->getTextureWidth() / renderTex->getTextureHeight(), 1.0f, 50.0f);
-
-	// Render terrain-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-// Render Waves
-	worldMatrix = renderer->getWorldMatrix();
-	waves->sendData(renderer->getDeviceContext());
-	waveDepth->setShaderParameters(renderer->getDeviceContext(), worldMatrix, viewMatrix, projectionMatrix, textureMgr->getTexture(L"waves"), light, run_time, WAVE_AMPLITUDE, WAVE_FREQUENCY, WAVE_SPEED);
-	waveDepth->render(renderer->getDeviceContext(), waves->getIndexCount());
-
-	// Render HeightMap
-	worldMatrix = XMMatrixTranslation(0.f, -2.86, 0.f);
-	heightMap->sendData(renderer->getDeviceContext());
-	heightDepth->setShaderParameters(renderer->getDeviceContext(), worldMatrix, viewMatrix, projectionMatrix, textureMgr->getTexture(L"grass"), light, textureMgr->getTexture(L"height"));
-	heightDepth->render(renderer->getDeviceContext(), heightMap->getIndexCount());
-
-
-	// Render models-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-	// Render Person
-	worldMatrix = XMMatrixTranslation(PERSON_MOVE);
-	XMMATRIX scaleMatrix = XMMatrixScaling(PERSON_TORCH_SIZE);
-	worldMatrix = XMMatrixMultiply(worldMatrix, scaleMatrix);
-	person->sendData(renderer->getDeviceContext());
-	depthShader->setShaderParameters(renderer->getDeviceContext(), worldMatrix, viewMatrix, projectionMatrix);
-	depthShader->render(renderer->getDeviceContext(), person->getIndexCount());
-
-	// Render Campfire
-	worldMatrix = XMMatrixTranslation(CAMP_MOVE);
-	scaleMatrix = XMMatrixScaling(CAMP_SIZE);
-	worldMatrix = XMMatrixMultiply(worldMatrix, scaleMatrix);
-	campfire->sendData(renderer->getDeviceContext());
-	depthShader->setShaderParameters(renderer->getDeviceContext(), worldMatrix, viewMatrix, projectionMatrix);
-	depthShader->render(renderer->getDeviceContext(), campfire->getIndexCount());
-
-	// Render Torch
-	XMMATRIX rotate = XMMatrixRotationY(TORCH_ROTATE);
-	worldMatrix = XMMatrixTranslation(TORCH_MOVE);
-	worldMatrix = XMMatrixMultiply(rotate, worldMatrix);
-	scaleMatrix = XMMatrixScaling(PERSON_TORCH_SIZE);
-	worldMatrix = XMMatrixMultiply(worldMatrix, scaleMatrix);
-	torch->sendData(renderer->getDeviceContext());
-	depthShader->setShaderParameters(renderer->getDeviceContext(), worldMatrix, viewMatrix, projectionMatrix);
-	depthShader->render(renderer->getDeviceContext(), torch->getIndexCount());
-
-	// Set back buffer as render target and reset view port.
-	renderer->setBackBufferRenderTarget();
-	renderer->resetViewport();
-}
-
-
-void App1::horBlurrification()
+void App1::GameBoy()
 {
 	XMMATRIX worldMatrix, baseViewMatrix, orthoMatrix;
 
-	float screenSizeX = (float)renderHorTex->getTextureWidth();
 	renderHorTex->setRenderTarget(renderer->getDeviceContext());
-	renderHorTex->clearRenderTarget(renderer->getDeviceContext(), 1.0f, 1.0f, 0.0f, 1.0f);
+	renderHorTex->clearRenderTarget(renderer->getDeviceContext(), 0.f, 0.f, 0.6f, 1.0f);
 
 	worldMatrix = renderer->getWorldMatrix();
 	baseViewMatrix = camera->getOrthoViewMatrix();
 	orthoMatrix = renderHorTex->getOrthoMatrix();
 
-	// Render for Horizontal Blur
 	renderer->setZBuffer(false);
 	orthoMesh->sendData(renderer->getDeviceContext());
-	horizontal->setShaderParameters(renderer->getDeviceContext(), worldMatrix, baseViewMatrix, orthoMatrix, renderTex->getShaderResourceView(), blur->getDepthMapSRV(), screenSizeX, fn, ff, bn, bf);//FOCUS_NEAR, FOCUS_FAR, BLUR_NEAR, BLUR_FAR);
-	horizontal->render(renderer->getDeviceContext(), orthoMesh->getIndexCount());
+	gameboyShader->setShaderParameters(renderer->getDeviceContext(), worldMatrix, baseViewMatrix, orthoMatrix, renderTex->getShaderResourceView(), x, y, run_time);
+	gameboyShader->render(renderer->getDeviceContext(), orthoMesh->getIndexCount());
 	renderer->setZBuffer(true);
 
-	// Reset the render target back to the original back buffer and not the render to texture anymore.
-	renderer->setBackBufferRenderTarget();
-}
-
-
-void App1::versBlurrification()
-{
-	XMMATRIX worldMatrix, baseViewMatrix, orthoMatrix;
-
-	float screenSizeY = (float)renderVerTex->getTextureHeight();
-	renderVerTex->setRenderTarget(renderer->getDeviceContext());
-	renderVerTex->clearRenderTarget(renderer->getDeviceContext(), 0.0f, 1.0f, 1.0f, 1.0f);
-
-	worldMatrix = renderer->getWorldMatrix();
-	baseViewMatrix = camera->getOrthoViewMatrix();
-	orthoMatrix = renderVerTex->getOrthoMatrix();
-
-	// Render for Horizontal Blur
-	renderer->setZBuffer(false);
-	orthoMesh->sendData(renderer->getDeviceContext());
-	vertical->setShaderParameters(renderer->getDeviceContext(), worldMatrix, baseViewMatrix, orthoMatrix, renderHorTex->getShaderResourceView(), blur->getDepthMapSRV(), screenSizeY, fn, ff, bn, bf);//FOCUS_NEAR, FOCUS_FAR, BLUR_NEAR, BLUR_FAR);
-	vertical->render(renderer->getDeviceContext(), orthoMesh->getIndexCount());
-	renderer->setZBuffer(true);
-
-	// Reset the render target back to the original back buffer and not the render to texture anymore.
-	renderer->setBackBufferRenderTarget();
 }
 
 
 void App1::finalPass()
 {
+	// Clear the scene. (default blue colour)
+	renderer->beginScene(0.39f, 0.58f, 0.92f, 1.0f);
+
 	// RENDER THE RENDER TEXTURE SCENE
 	// Requires 2D rendering and an ortho mesh.
 	renderer->setZBuffer(false);
@@ -476,15 +388,8 @@ void App1::finalPass()
 	XMMATRIX orthoMatrix = renderer->getOrthoMatrix();  // ortho matrix for 2D rendering
 	XMMATRIX orthoViewMatrix = camera->getOrthoViewMatrix();	// Default camera position for orthographic rendering
 
-	RenderTexture* finalTexture;
-
-	if (blurry)
-		finalTexture = renderVerTex;
-	else
-		finalTexture = renderTex;
-
 	orthoMesh->sendData(renderer->getDeviceContext());
-	textureShader->setShaderParameters(renderer->getDeviceContext(), worldMatrix, orthoViewMatrix, orthoMatrix, finalTexture->getShaderResourceView());
+	textureShader->setShaderParameters(renderer->getDeviceContext(), worldMatrix, orthoViewMatrix, orthoMatrix, renderHorTex->getShaderResourceView());
 	textureShader->render(renderer->getDeviceContext(), orthoMesh->getIndexCount());
 
 	renderer->setZBuffer(true);
@@ -495,6 +400,160 @@ void App1::finalPass()
 	//// Present the rendered scene to the screen.
 	renderer->endScene();
 }
+
+
+bool App1::render()
+{
+	depthPass();
+
+	shadowPass();
+
+	//if (blurry)
+	//{
+	//	blurDepth();
+
+	//	horBlurrification();
+
+	//	versBlurrification();
+	//}
+
+
+	finalPass();
+	return true;
+}
+
+void App1::gui()
+{
+	// Force turn off unnecessary shader stages.
+	renderer->getDeviceContext()->GSSetShader(NULL, NULL, 0);
+	renderer->getDeviceContext()->HSSetShader(NULL, NULL, 0);
+	renderer->getDeviceContext()->DSSetShader(NULL, NULL, 0);
+
+	// Build UI
+	ImGui::Text("FPS: %.2f", timer->getFPS());
+	ImGui::Checkbox("Wireframe mode", &wireframeToggle);
+	ImGui::Checkbox("Activate Rain", &blurry);
+	ImGui::SliderFloat("blur near", &bn, 0, 2);
+	ImGui::SliderFloat("blur far", &bf, 0, 2);
+	ImGui::SliderFloat("focus near", &fn, 0, 2);
+	ImGui::SliderFloat("focus far", &ff, 0, 2);
+
+	// Render UI
+	ImGui::Render();
+	ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
+}
+
+
+//void App1::blurDepth()
+//{
+//	// Set the render target to be the render to texture.
+//	blur->BindDsvAndSetNullRenderTarget(renderer->getDeviceContext());
+//
+//	// Generate the view matrix based on the camera's position.
+//	camera->update();
+//
+//	// get the world, view, and projection matrices from the camera and d3d objects.
+//	XMMATRIX worldMatrix = renderer->getWorldMatrix();
+//	XMMATRIX viewMatrix = camera->getViewMatrix();
+//	XMMATRIX projectionMatrix = XMMatrixPerspectiveFovLH((float)XM_PI / 4.0f, renderTex->getTextureWidth() / renderTex->getTextureHeight(), 1.0f, 50.0f);
+//
+//	// Render terrain-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+//// Render Waves
+//	worldMatrix = renderer->getWorldMatrix();
+//	waves->sendData(renderer->getDeviceContext());
+//	waveDepth->setShaderParameters(renderer->getDeviceContext(), worldMatrix, viewMatrix, projectionMatrix, textureMgr->getTexture(L"waves"), light, run_time, WAVE_AMPLITUDE, WAVE_FREQUENCY, WAVE_SPEED);
+//	waveDepth->render(renderer->getDeviceContext(), waves->getIndexCount());
+//
+//	// Render HeightMap
+//	worldMatrix = XMMatrixTranslation(0.f, -2.86, 0.f);
+//	heightMap->sendData(renderer->getDeviceContext());
+//	heightDepth->setShaderParameters(renderer->getDeviceContext(), worldMatrix, viewMatrix, projectionMatrix, textureMgr->getTexture(L"grass"), light, textureMgr->getTexture(L"height"));
+//	heightDepth->render(renderer->getDeviceContext(), heightMap->getIndexCount());
+//
+//
+//	// Render models-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+//	// Render Person
+//	worldMatrix = XMMatrixTranslation(PERSON_MOVE);
+//	XMMATRIX scaleMatrix = XMMatrixScaling(PERSON_TORCH_SIZE);
+//	worldMatrix = XMMatrixMultiply(worldMatrix, scaleMatrix);
+//	person->sendData(renderer->getDeviceContext());
+//	depthShader->setShaderParameters(renderer->getDeviceContext(), worldMatrix, viewMatrix, projectionMatrix);
+//	depthShader->render(renderer->getDeviceContext(), person->getIndexCount());
+//
+//	// Render Campfire
+//	worldMatrix = XMMatrixTranslation(CAMP_MOVE);
+//	scaleMatrix = XMMatrixScaling(CAMP_SIZE);
+//	worldMatrix = XMMatrixMultiply(worldMatrix, scaleMatrix);
+//	campfire->sendData(renderer->getDeviceContext());
+//	depthShader->setShaderParameters(renderer->getDeviceContext(), worldMatrix, viewMatrix, projectionMatrix);
+//	depthShader->render(renderer->getDeviceContext(), campfire->getIndexCount());
+//
+//	// Render Torch
+//	XMMATRIX rotate = XMMatrixRotationY(TORCH_ROTATE);
+//	worldMatrix = XMMatrixTranslation(TORCH_MOVE);
+//	worldMatrix = XMMatrixMultiply(rotate, worldMatrix);
+//	scaleMatrix = XMMatrixScaling(PERSON_TORCH_SIZE);
+//	worldMatrix = XMMatrixMultiply(worldMatrix, scaleMatrix);
+//	torch->sendData(renderer->getDeviceContext());
+//	depthShader->setShaderParameters(renderer->getDeviceContext(), worldMatrix, viewMatrix, projectionMatrix);
+//	depthShader->render(renderer->getDeviceContext(), torch->getIndexCount());
+//
+//	// Set back buffer as render target and reset view port.
+//	renderer->setBackBufferRenderTarget();
+//	renderer->resetViewport();
+//}
+//
+//
+//void App1::horBlurrification()
+//{
+//XMMATRIX worldMatrix, baseViewMatrix, orthoMatrix;
+//
+//	float screenSizeX = (float)renderHorTex->getTextureWidth();
+//	renderHorTex->setRenderTarget(renderer->getDeviceContext());
+//	renderHorTex->clearRenderTarget(renderer->getDeviceContext(), 1.0f, 1.0f, 0.0f, 1.0f);
+//
+//	worldMatrix = renderer->getWorldMatrix();
+//	baseViewMatrix = camera->getOrthoViewMatrix();
+//	orthoMatrix = renderHorTex->getOrthoMatrix();
+//
+//	// Render for Horizontal Blur
+//	renderer->setZBuffer(false);
+//	orthoMesh->sendData(renderer->getDeviceContext());
+//	horizontal->setShaderParameters(renderer->getDeviceContext(), worldMatrix, baseViewMatrix, orthoMatrix, renderTex->getShaderResourceView(), blur->getDepthMapSRV(), screenSizeX, fn, ff, bn, bf);//FOCUS_NEAR, FOCUS_FAR, BLUR_NEAR, BLUR_FAR);
+//	horizontal->render(renderer->getDeviceContext(), orthoMesh->getIndexCount());
+//	renderer->setZBuffer(true);
+//
+//	// Reset the render target back to the original back buffer and not the render to texture anymore.
+//	renderer->setBackBufferRenderTarget();
+//}
+//
+//
+//void App1::versBlurrification()
+//{
+//	XMMATRIX worldMatrix, baseViewMatrix, orthoMatrix;
+//
+//	float screenSizeY = (float)renderVerTex->getTextureHeight();
+//	renderVerTex->setRenderTarget(renderer->getDeviceContext());
+//	renderVerTex->clearRenderTarget(renderer->getDeviceContext(), 0.0f, 1.0f, 1.0f, 1.0f);
+//
+//	worldMatrix = renderer->getWorldMatrix();
+//	baseViewMatrix = camera->getOrthoViewMatrix();
+//	orthoMatrix = renderVerTex->getOrthoMatrix();
+//
+//	// Render for Horizontal Blur
+//	renderer->setZBuffer(false);
+//	orthoMesh->sendData(renderer->getDeviceContext());
+//	vertical->setShaderParameters(renderer->getDeviceContext(), worldMatrix, baseViewMatrix, orthoMatrix, renderHorTex->getShaderResourceView(), blur->getDepthMapSRV(), screenSizeY, fn, ff, bn, bf);//FOCUS_NEAR, FOCUS_FAR, BLUR_NEAR, BLUR_FAR);
+//	vertical->render(renderer->getDeviceContext(), orthoMesh->getIndexCount());
+//	renderer->setZBuffer(true);
+//
+//	// Reset the render target back to the original back buffer and not the render to texture anymore.
+//	renderer->setBackBufferRenderTarget();
+//}
+
+
+
+
 
 // Rain Post Process Effect R.I.P
 //void App1::finalPass()
@@ -523,46 +582,3 @@ void App1::finalPass()
 //	// Display Scene
 //	renderer->endScene();
 //}
-
-
-bool App1::render()
-{
-	depthPass();
-
-	shadowPass();
-
-	if (blurry)
-	{
-		blurDepth();
-
-		horBlurrification();
-
-		versBlurrification();
-	}
-
-
-	finalPass();
-	return true;
-}
-
-void App1::gui()
-{
-	// Force turn off unnecessary shader stages.
-	renderer->getDeviceContext()->GSSetShader(NULL, NULL, 0);
-	renderer->getDeviceContext()->HSSetShader(NULL, NULL, 0);
-	renderer->getDeviceContext()->DSSetShader(NULL, NULL, 0);
-
-	// Build UI
-	ImGui::Text("FPS: %.2f", timer->getFPS());
-	ImGui::Checkbox("Wireframe mode", &wireframeToggle);
-	ImGui::Checkbox("Activate Rain", &blurry);
-	ImGui::SliderFloat("blur near", &bn, 0, 2);
-	ImGui::SliderFloat("blur far", &bf, 0, 2);
-	ImGui::SliderFloat("focus near", &fn, 0, 2);
-	ImGui::SliderFloat("focus far", &ff, 0, 2);
-
-	// Render UI
-	ImGui::Render();
-	ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
-}
-

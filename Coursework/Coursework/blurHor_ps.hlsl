@@ -185,7 +185,7 @@ float4 main(InputType input) : SV_TARGET
 			else
 				index = i;
 
-			colour += texture0.Sample(sampler0, input.tex + float2(0.0f, texelSize * -7.0f)) * weight[index];
+			colour += texture0.Sample(sampler0, input.tex + float2(texelSize * -7.0f, 0.f)) * weight[index];
 		}
 		//colour += texture0.Sample(sampler0, input.tex + float2(texelSize * -7.0f, 0.0f)) * weight7;
 		//colour += texture0.Sample(sampler0, input.tex + float2(texelSize * -6.0f, 0.0f)) * weight6;

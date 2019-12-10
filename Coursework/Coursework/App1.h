@@ -10,6 +10,7 @@
 #include "ShadowShader.h"
 #include "DepthShader.h"
 #include "WaveDepth.h"
+#include "GameboyShader.h"
 //#include "RainProcessing.h"
 #include "HeightDepth.h"
 #include "BlurHoorShader.h"
@@ -30,11 +31,13 @@ protected:
 	bool render();
 	void depthPass();
 	void shadowPass();
-	void blurDepth();
-	void horBlurrification();
-	void versBlurrification();
+	void GameBoy();
 	void finalPass();
 	void gui();
+
+	//void blurDepth();
+	//void horBlurrification();
+	//void versBlurrification();
 
 private:
 	HeightShader* heightShader;
@@ -45,6 +48,8 @@ private:
 	ShadowMap* shadowMap;
 	ShadowMap* blur;
 	HeightDepth* heightDepth;
+	GameboyShader* gameboyShader;
+
 	WaveDepth* waveDepth;
 	BlurHoorShader* horizontal;
 	BlurVersShader* vertical;
@@ -64,6 +69,7 @@ private:
 
 	float amplitude, freq, speed, run_time, timeDif, oldTime, bn, bf, fn, ff;
 	bool blurry;
+	float x, y;
 	//bool raining;
 
 

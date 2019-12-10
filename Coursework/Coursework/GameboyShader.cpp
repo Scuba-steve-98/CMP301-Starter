@@ -2,7 +2,7 @@
 
 GameboyShader::GameboyShader(ID3D11Device* device, HWND hwnd) : BaseShader(device, hwnd)
 {
-	initShader(L"wave_manip_vs.cso", L"wave_manip_ps.cso");
+	initShader(L"gameBoy_vs.cso", L"gameBoy_ps.cso");
 }
 
 

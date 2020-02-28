@@ -29,9 +29,9 @@ private:
 
 	void initShader(const wchar_t* vs, const wchar_t* ps);
 
-	ID3D11Buffer* matrixBuffer;
 	ID3D11SamplerState* depthSampleState;
 	ID3D11SamplerState* sampleState;
+	ID3D11Buffer* matrixBuffer;
 	ID3D11Buffer* screenSizeBuffer;
 	ID3D11Buffer* depthBlurBuffer;
 };

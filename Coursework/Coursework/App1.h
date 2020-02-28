@@ -10,8 +10,6 @@
 #include "ShadowShader.h"
 #include "DepthShader.h"
 #include "WaveDepth.h"
-#include "GameboyShader.h"
-//#include "RainProcessing.h"
 #include "HeightDepth.h"
 #include "BlurHoorShader.h"
 #include "BlurVersShader.h"
@@ -31,13 +29,12 @@ protected:
 	bool render();
 	void depthPass();
 	void shadowPass();
-	void GameBoy();
 	void finalPass();
 	void gui();
 
-	//void blurDepth();
-	//void horBlurrification();
-	//void versBlurrification();
+	void blurDepth();
+	void horBlurrification();
+	void versBlurrification();
 
 private:
 	HeightShader* heightShader;
@@ -48,17 +45,17 @@ private:
 	ShadowMap* shadowMap;
 	ShadowMap* blur;
 	HeightDepth* heightDepth;
-	GameboyShader* gameboyShader;
 
 	WaveDepth* waveDepth;
 	BlurHoorShader* horizontal;
 	BlurVersShader* vertical;
-	//RainProcessing* rainProcess;
 	Light* light;
 
-	RenderTexture* renderTex;
+	RenderTexture* renderDepthTex;
+	RenderTexture* renderShadowTex;
 	RenderTexture* renderHorTex;
 	RenderTexture* renderVerTex;
+	RenderTexture* finalTex;
 
 	PlaneMesh* heightMap;
 	PlaneMesh* waves;
@@ -67,11 +64,8 @@ private:
 	Model* torch;
 	Model* campfire;
 
-	float amplitude, freq, speed, run_time, timeDif, oldTime, bn, bf, fn, ff;
+	float run_time;
 	bool blurry;
-	float x, y;
-	//bool raining;
-
 
 	OrthoMesh* orthoMesh;
 };

@@ -1,4 +1,4 @@
-;struct InputType
+struct InputType
 {
 	float4 position : SV_POSITION;
 	float4 depthPosition : TEXCOORD0;

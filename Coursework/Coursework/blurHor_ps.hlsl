@@ -1,6 +1,6 @@
-Texture2D texture0 : register(t0);
+Texture2D sceneTexture : register(t0);
 Texture2D depthTexture : register(t1);
-SamplerState sampler0 : register(s0);
+SamplerState texSampler : register(s0);
 SamplerState depthSampler : register(s1);
 
 cbuffer ScreenSizeBuffer : register(b0)
@@ -23,194 +23,131 @@ struct InputType
 	float2 tex : TEXCOORD0;
 };
 
-int calculateBlurFactor(float depthValue, float focusNear, float focusFar, float blurNear, float blurFar)
-{
-	if (depthValue >= focusNear && depthValue <= focusFar) // Is depthValue in focus?
-	{
-		// No blur
-		return 0;
-	}
-	else if (depthValue < focusNear) // Is depthValue in foreground?
-	{
-		float difference = focusNear - blurNear;
-		float step = difference / 5.0f;
 
-		for (int i = 0; i < 5; i++)
+float4 main(InputType input) : SV_TARGET
+{
+	float depth = depthTexture.Sample(depthSampler, input.tex).r;
+	int blurFactor = 0;
+	
+	if (focusNear <= depth <= focusFar)
+	{
+		blurFactor = 0;
+	}
+	else if (depth < focusNear)
+	{
+		float step = (focusNear - blurNear) / 4.0f;
+		
+		blurFactor = 5;
+		
+		for (int i = 0; i < 4; i++)
 		{
 			float min = focusNear - (step * (i + 1));
 			float max = focusNear - (step * i);
-			
-			if (depthValue >= min && depthValue < max)
+
+			if (min < depth < max)
 			{
-				return (i + 1);
+				blurFactor = (i + 1);
 			}
 		}
-
-		// If not between focusNear & blurNear, then outside of range & at max blur
-		return 6;
 	}
-	else if (depthValue > focusFar) // Is depthValue in background?
+	else if (depth > focusFar)
 	{
-		float difference = blurFar - focusFar;
-		float step = difference / 5.0f;
-
-		for (int i = 0; i < 5; i++)
+		float step = (blurFar - focusFar) / 4.0f;
+		
+		blurFactor = 5;
+		
+		for (int i = 0; i < 4; i++)
 		{
 			float min = focusFar + (step * i);
 			float max = focusFar + (step * (i + 1));
 
-			if (depthValue >= min && depthValue < max)
+			if (min < depth < max)
 			{
-				return (i + 1);
+				blurFactor = (i + 1);
 			}
 		}
-
-		// If not between focusFar & blurFar, then must be outside of range & at max blur
-		return 6;
 	}
-	else
-	{
-		// Error occured - don't do blur
-		return 0;
-	}
-}
-
-float4 main(InputType input) : SV_TARGET
-{
+	
 	float4 colour;
-	float depthValue;
-	float weight[8], weight0, weight1, weight2, weight3, weight4, weight5, weight6, weight7;
-
-	depthValue = depthTexture.Sample(depthSampler, input.tex).r;
-
-	int blurFactor = calculateBlurFactor(depthValue, focusNear, focusFar, blurNear, blurFar);
-
-	if (blurFactor == 0) // No blur
+	float weight[7];
+	switch (blurFactor)
 	{
-		colour = texture0.Sample(sampler0, input.tex);
-	}
-	else // Blur
-	{
-		switch (blurFactor)
-		{
+		case 0:
+			colour = sceneTexture.Sample(texSampler, input.tex);
+			break;
 		case 1:
-			weight[0] = 0.682689f;
-			weight[1] = 0.157305f;
-			weight[2] = 0.00135f;
+			weight[0] = 0.62518631f;
+			weight[1] = 0.174615f;
+			weight[2] = 0.0016546f;
+			weight[3] = 0.0000161f;
+			weight[4] = 0.0f;
+			weight[5] = 0.0f;
+			weight[6] = 0.0f;
+			break;
+		case 2:
+			weight[0] = 0.3746844f;
+			weight[1] = 0.2715641f;
+			weight[2] = 0.05481f;
+			weight[3] = 0.006f;
+			weight[4] = 0.0003f;
+			weight[5] = 0.00008f;
+			weight[6] = 0.0f;
+			break;
+		case 3:
+			weight[0] = 0.248614f;
+			weight[1] = 0.216612f;
+			weight[2] = 0.124647f;
+			weight[3] = 0.0548f;
+			weight[4] = 0.00645f;
+			weight[5] = 0.001776f;
+			weight[6] = 0.000084f;
+			break;
+		case 4:
+			weight[0] = 0.200154f;
+			weight[1] = 0.165483f;
+			weight[2] = 0.119f;
+			weight[3] = 0.07f;
+			weight[4] = 0.024071f;
+			weight[5] = 0.009067f;
+			weight[6] = 0.002201f;
+			break;
+		case 5:
+			weight[0] = 0.16f;
+			weight[1] = 0.139475f;
+			weight[2] = 0.12716f;
+			weight[3] = 0.080379f;
+			weight[4] = 0.045f;
+			weight[5] = 0.020173f;
+			weight[6] = 0.010098f;
+			break;
+		default:
+			weight[0] = 1.0f;
+			weight[1] = 0.0f;
+			weight[2] = 0.0f;
 			weight[3] = 0.0f;
 			weight[4] = 0.0f;
 			weight[5] = 0.0f;
 			weight[6] = 0.0f;
-			weight[7] = 0.0f;
 			break;
-		case 2:
-			weight[0] = 0.382925f;
-			weight[1] = 0.24173f;
-			weight[2] = 0.060598f;
-			weight[3] = 0.005977f;
-			weight[4] = 0.000229f;
-			weight[5] = 0.000003f;
-			weight[6] = 0.0f;
-			weight[7] = 0.0f;
-			break;
-		case 3:
-			weight[0] = 0.261117f;
-			weight[1] = 0.210786f;
-			weight[2] = 0.110865f;
-			weight[3] = 0.037975f;
-			weight[4] = 0.008465f;
-			weight[5] = 0.001227f;
-			weight[6] = 0.000116f;
-			weight[7] = 0.000007f;
-			break;
-		case 4:
-			weight[0] = 0.197448f;
-			weight[1] = 0.174697f;
-			weight[2] = 0.120999f;
-			weight[3] = 0.065602f;
-			weight[4] = 0.02784f;
-			weight[5] = 0.009246f;
-			weight[6] = 0.002403f;
-			weight[7] = 0.000489f;
-			break;
-		case 5:
-			weight[0] = 0.158949f;
-			weight[1] = 0.146884f;
-			weight[2] = 0.115911f;
-			weight[3] = 0.078109f;
-			weight[4] = 0.044948f;
-			weight[5] = 0.022087f;
-			weight[6] = 0.009267f;
-			weight[7] = 0.00332f;
-			break;
-		case 6:
-			weight[0] = 0.134032f;
-			weight[1] = 0.126854f;
-			weight[2] = 0.107545f;
-			weight[3] = 0.08167f;
-			weight[4] = 0.055555f;
-			weight[5] = 0.033851f;
-			weight[6] = 0.018476f;
-			weight[7] = 0.009033f;
-			break;
-		default:
-			// Error occured - no blur
-			for (int i = 0; i < 8; i++)
-			{
-				weight[i] = 0.5f;
-			}
-			//weight0 = 1.0f;
-			//weight1 = 0.0f;
-			//weight2 = 0.0f;
-			//weight3 = 0.0f;
-			//weight4 = 0.0f;
-			//weight5 = 0.0f;
-			//weight6 = 0.0f;
-			//weight7 = 0.0f;
-			break;
-		}
-
-		// Init colour to black
-		colour = float4(0.0f, 0.0f, 0.0f, 0.0f);
-
-		// Determine floating point size of a texel for a screen of this specific width
-		float texelSize = 1.0f / screenWidth;
-
-		// Add the horizontal pixels to the colour by the specific weight of each
-		for (int i = -7; i < 8; i++)
-		{
-			int index = 0;
-			if (i < 0)
-				index = -i;
-			else
-				index = i;
-
-			colour += texture0.Sample(sampler0, input.tex + float2(texelSize * -7.0f, 0.f)) * weight[index];
-		}
-		//colour += texture0.Sample(sampler0, input.tex + float2(texelSize * -7.0f, 0.0f)) * weight7;
-		//colour += texture0.Sample(sampler0, input.tex + float2(texelSize * -6.0f, 0.0f)) * weight6;
-		//colour += texture0.Sample(sampler0, input.tex + float2(texelSize * -5.0f, 0.0f)) * weight5;
-		//colour += texture0.Sample(sampler0, input.tex + float2(texelSize * -4.0f, 0.0f)) * weight4;
-		//colour += texture0.Sample(sampler0, input.tex + float2(texelSize * -3.0f, 0.0f)) * weight3;
-		//colour += texture0.Sample(sampler0, input.tex + float2(texelSize * -2.0f, 0.0f)) * weight2;
-		//colour += texture0.Sample(sampler0, input.tex + float2(texelSize * -1.0f, 0.0f)) * weight1;
-		//colour += texture0.Sample(sampler0, input.tex) * weight0;
-		//colour += texture0.Sample(sampler0, input.tex + float2(texelSize * 1.0f, 0.0f)) * weight1;
-		//colour += texture0.Sample(sampler0, input.tex + float2(texelSize * 2.0f, 0.0f)) * weight2;
-		//colour += texture0.Sample(sampler0, input.tex + float2(texelSize * 3.0f, 0.0f)) * weight3;
-		//colour += texture0.Sample(sampler0, input.tex + float2(texelSize * 4.0f, 0.0f)) * weight4;
-		//colour += texture0.Sample(sampler0, input.tex + float2(texelSize * 5.0f, 0.0f)) * weight5;
-		//colour += texture0.Sample(sampler0, input.tex + float2(texelSize * 6.0f, 0.0f)) * weight6;
-		//colour += texture0.Sample(sampler0, input.tex + float2(texelSize * 7.0f, 0.0f)) * weight7;
-
-		// Set the alpha channel to one
-		colour.a = 1.0f;
 	}
 
-	//return float4(input.position.xy, input.position.w, 1.0f);
-	//return float4(input.position.xy / input.position.w, 0.0f, 1.0f);
-	//return float4(pTexCoord, 0.0f, 1.0f);
-	//return float4(depthValue, depthValue, depthValue, 1.0f);
+	// Init colour to black
+	colour = float4(0.0f, 0.0f, 0.0f, 0.0f);
 
+	// Determine floating point size of a texel for a screen of this specific width
+	float texelSize = 1.0f / screenWidth;
+		
+	for (int i = -6; i < 7; i++)
+	{
+		int x = i;
+		if (x < 0)
+			x = -i;
+		
+		colour += sceneTexture.Sample(texSampler, input.tex + float2(texelSize * i, 0.0f)) * weight[x];
+	}
+
+	// Set the alpha channel to one
+	colour.a = 1.0f;
+	
 	return colour;
 }

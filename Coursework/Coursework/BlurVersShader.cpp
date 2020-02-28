@@ -56,16 +56,16 @@ BlurVersShader::~BlurVersShader()
 }
 
 
-void BlurVersShader::initShader(const wchar_t* vs, const wchar_t* ps)
+void BlurVersShader::initShader(const wchar_t* vsFilename, const wchar_t* psFilename)
 {
-	D3D11_BUFFER_DESC matrixBufferDesc;
 	D3D11_SAMPLER_DESC samplerDesc;
-	D3D11_BUFFER_DESC screenSizeBufferDesc;
-	D3D11_BUFFER_DESC depthBlurBufferDesc;
+	D3D11_BUFFER_DESC matrixBufferDesc;
+	D3D11_BUFFER_DESC screenBufferDesc;
+	D3D11_BUFFER_DESC depthBufferDesc;
 
 	// Load (+ compile) shader files
-	loadVertexShader(vs);
-	loadPixelShader(ps);
+	loadVertexShader(vsFilename);
+	loadPixelShader(psFilename);
 
 	// Setup the description of the dynamic matrix constant buffer that is in the vertex shader.
 	matrixBufferDesc.Usage = D3D11_USAGE_DYNAMIC;
@@ -78,16 +78,12 @@ void BlurVersShader::initShader(const wchar_t* vs, const wchar_t* ps)
 
 	// Create a texture sampler state description.
 	samplerDesc.Filter = D3D11_FILTER_ANISOTROPIC;
-	samplerDesc.AddressU = D3D11_TEXTURE_ADDRESS_WRAP;
-	samplerDesc.AddressV = D3D11_TEXTURE_ADDRESS_WRAP;
-	samplerDesc.AddressW = D3D11_TEXTURE_ADDRESS_WRAP;
+	samplerDesc.AddressU = D3D11_TEXTURE_ADDRESS_CLAMP;
+	samplerDesc.AddressV = D3D11_TEXTURE_ADDRESS_CLAMP;
+	samplerDesc.AddressW = D3D11_TEXTURE_ADDRESS_CLAMP;
 	samplerDesc.MipLODBias = 0.0f;
 	samplerDesc.MaxAnisotropy = 1;
 	samplerDesc.ComparisonFunc = D3D11_COMPARISON_ALWAYS;
-	samplerDesc.BorderColor[0] = 0;
-	samplerDesc.BorderColor[1] = 0;
-	samplerDesc.BorderColor[2] = 0;
-	samplerDesc.BorderColor[3] = 0;
 	samplerDesc.MinLOD = 0;
 	samplerDesc.MaxLOD = D3D11_FLOAT32_MAX;
 	renderer->CreateSamplerState(&samplerDesc, &sampleState);
@@ -97,29 +93,25 @@ void BlurVersShader::initShader(const wchar_t* vs, const wchar_t* ps)
 	samplerDesc.AddressU = D3D11_TEXTURE_ADDRESS_BORDER;
 	samplerDesc.AddressV = D3D11_TEXTURE_ADDRESS_BORDER;
 	samplerDesc.AddressW = D3D11_TEXTURE_ADDRESS_BORDER;
-	samplerDesc.BorderColor[0] = 1.0f;
-	samplerDesc.BorderColor[1] = 1.0f;
-	samplerDesc.BorderColor[2] = 1.0f;
-	samplerDesc.BorderColor[3] = 1.0f;
 	renderer->CreateSamplerState(&samplerDesc, &depthSampleState);
 
-	// Setup the description of the screen size.
-	screenSizeBufferDesc.Usage = D3D11_USAGE_DYNAMIC;
-	screenSizeBufferDesc.ByteWidth = sizeof(ScreenBufferType);
-	screenSizeBufferDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
-	screenSizeBufferDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
-	screenSizeBufferDesc.MiscFlags = 0;
-	screenSizeBufferDesc.StructureByteStride = 0;
-	renderer->CreateBuffer(&screenSizeBufferDesc, NULL, &screenSizeBuffer);
+	// Setup screen size buffer
+	screenBufferDesc.Usage = D3D11_USAGE_DYNAMIC;
+	screenBufferDesc.ByteWidth = sizeof(ScreenBufferType);
+	screenBufferDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+	screenBufferDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+	screenBufferDesc.MiscFlags = 0;
+	screenBufferDesc.StructureByteStride = 0;
+	renderer->CreateBuffer(&screenBufferDesc, NULL, &screenSizeBuffer);
 
 	// Setup depth blur buffer
-	depthBlurBufferDesc.Usage = D3D11_USAGE_DYNAMIC;
-	depthBlurBufferDesc.ByteWidth = sizeof(DepthBufferType);
-	depthBlurBufferDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
-	depthBlurBufferDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
-	depthBlurBufferDesc.MiscFlags = 0;
-	depthBlurBufferDesc.StructureByteStride = 0;
-	renderer->CreateBuffer(&depthBlurBufferDesc, NULL, &depthBlurBuffer);
+	depthBufferDesc.Usage = D3D11_USAGE_DYNAMIC;
+	depthBufferDesc.ByteWidth = sizeof(DepthBufferType);
+	depthBufferDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+	depthBufferDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+	depthBufferDesc.MiscFlags = 0;
+	depthBufferDesc.StructureByteStride = 0;
+	renderer->CreateBuffer(&depthBufferDesc, NULL, &depthBlurBuffer);
 }
 
 
@@ -127,13 +119,12 @@ void BlurVersShader::setShaderParameters(ID3D11DeviceContext* deviceContext, con
 {
 	D3D11_MAPPED_SUBRESOURCE mappedResource;
 	MatrixBufferType* dataPtr;
-	XMMATRIX tworld, tview, tproj;
+
 
 	// Transpose the matrices to prepare them for the shader.
-	tworld = XMMatrixTranspose(worldMatrix);
-	tview = XMMatrixTranspose(viewMatrix);
-	tproj = XMMatrixTranspose(projectionMatrix);
-
+	XMMATRIX tworld = XMMatrixTranspose(worldMatrix);
+	XMMATRIX tview = XMMatrixTranspose(viewMatrix);
+	XMMATRIX tproj = XMMatrixTranspose(projectionMatrix);
 	deviceContext->Map(matrixBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedResource);
 	dataPtr = (MatrixBufferType*)mappedResource.pData;
 	dataPtr->world = tworld;// worldMatrix;
@@ -142,20 +133,20 @@ void BlurVersShader::setShaderParameters(ID3D11DeviceContext* deviceContext, con
 	deviceContext->Unmap(matrixBuffer, 0);
 	deviceContext->VSSetConstantBuffers(0, 1, &matrixBuffer);
 
-	// Send screen size to pixel shader
-	ScreenBufferType* widthPtr;
-	deviceContext->Map(screenSizeBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedResource);
-	widthPtr = (ScreenBufferType*)mappedResource.pData;
-	widthPtr->screenHeight = screenHeight;
-	widthPtr->padding = XMFLOAT3(0.0f, 0.0f, 0.0f);
-	deviceContext->Unmap(screenSizeBuffer, 0);
-	deviceContext->PSSetConstantBuffers(0, 1, &screenSizeBuffer);
-
 	// Set shader texture resource in the pixel shader.
 	deviceContext->PSSetShaderResources(0, 1, &texture);
 	deviceContext->PSSetShaderResources(1, 1, &depthMap);
 	deviceContext->PSSetSamplers(0, 1, &sampleState);
 	deviceContext->PSSetSamplers(1, 1, &depthSampleState);
+
+	// Send screen width to pixel shader
+	ScreenBufferType* screenSizePtr;
+	deviceContext->Map(screenSizeBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedResource);
+	screenSizePtr = (ScreenBufferType*)mappedResource.pData;
+	screenSizePtr->screenHeight = screenHeight;
+	screenSizePtr->padding = XMFLOAT3(0.0f, 0.0f, 0.0f);
+	deviceContext->Unmap(screenSizeBuffer, 0);
+	deviceContext->PSSetConstantBuffers(0, 1, &screenSizeBuffer);
 
 	// Send screen width to pixel shader
 	DepthBufferType* depthBlurPtr;
